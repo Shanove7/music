@@ -3,315 +3,567 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#09090b">
     <title>Shanove Music</title>
     
-    <!-- Fonts & Style -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FAVICON & APP ICON (Home Screen) -->
+    <link rel="icon" href="https://n.uguu.se/olrRLQVZ.jpg" type="image/jpeg">
+    <link rel="apple-touch-icon" href="https://n.uguu.se/olrRLQVZ.jpg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+
+    <!-- SDK EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <!-- Tailwind & Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #09090b; color: white; overflow: hidden; }
-        .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        /* Loader Animation */
-        .loader { border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; width: 20px; height: 20px;}
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: #050505; 
+            color: white; 
+            overflow: hidden; 
+            /* Prevent pull-to-refresh on mobile */
+            overscroll-behavior-y: none;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Utilities */
+        .glass { background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Range Slider Custom */
+        input[type=range] { -webkit-appearance: none; background: transparent; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { height: 4px; background: #333; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; margin-top: -4px; opacity: 0; transition: 0.2s; }
+        input[type=range]:hover::-webkit-slider-thumb { opacity: 1; }
+
+        /* Animations */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(139, 92, 246, 0.1); }
+            50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.3); }
+        }
+        .animate-pulse-glow { animation: pulse-glow 3s infinite; }
+        
+        .fs-overlay { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1); }
+        .fs-overlay.active { transform: translateY(0); }
     </style>
 </head>
-<body class="h-screen w-screen relative">
+<body class="h-screen flex flex-col selection:bg-purple-500 selection:text-white">
 
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="absolute inset-0 z-50 bg-[#09090b] flex flex-col items-center justify-center p-6 transition-opacity duration-500">
-        <div class="w-full max-w-md text-center">
-            <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-white/10 shadow-2xl shadow-purple-500/50">
-            <h1 class="text-3xl font-bold mb-8">Shanove Music</h1>
+    <!-- LOGIN MODAL -->
+    <div id="loginOverlay" class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
+        <!-- Dark Overlay -->
+        <div class="absolute inset-0 bg-black/85 backdrop-blur-sm"></div>
 
-            <!-- Step 1: Input Nomor -->
-            <div id="step-1" class="space-y-4">
-                <div class="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-3">
-                    <i class="fab fa-whatsapp text-green-500 text-xl"></i>
-                    <input type="tel" id="wa-input" placeholder="08xxxxxxxxxx" class="bg-transparent w-full outline-none text-white placeholder-gray-500 font-bold">
-                </div>
-                <button onclick="requestOTP()" id="btn-request" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 py-4 rounded-xl font-bold shadow-lg active:scale-95 transition hover:brightness-110">
-                    Kirim Kode OTP
+        <div class="bg-[#121212] border border-[#333] p-8 rounded-2xl w-full max-w-md text-center shadow-2xl relative z-10 animate-pulse-glow">
+            
+            <!-- LOGO AREA (Login) -->
+            <div class="mb-8 flex flex-col items-center justify-center">
+                <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-20 h-20 rounded-full mb-4 shadow-lg border-2 border-purple-500/30 object-cover">
+                <h1 class="text-3xl font-bold tracking-tight">Shanove Music</h1>
+                <p class="text-gray-400 text-sm mt-1">Premium Web Player</p>
+            </div>
+            
+            <!-- STEP 1: EMAIL -->
+            <div id="emailForm" class="relative z-10">
+                <div class="text-left mb-2 ml-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Email Address</div>
+                <input type="email" id="emailInput" placeholder="name@example.com" class="w-full bg-[#1e1e1e] text-white p-4 rounded-xl mb-4 outline-none border border-[#333] focus:border-purple-500 focus:bg-[#252525] transition shadow-inner">
+                <button onclick="sendOTP()" id="btnSend" class="w-full bg-white hover:bg-gray-200 text-black font-bold py-4 rounded-xl transition transform active:scale-95 shadow-lg">
+                    Continue with Email
                 </button>
             </div>
 
-            <!-- Step 2: Input OTP -->
-            <div id="step-2" class="space-y-4 hidden">
-                <p class="text-sm text-gray-400">Masukkan kode yang dikirim Bot ke WhatsApp Anda</p>
-                <div class="flex justify-center gap-3">
-                    <input type="text" id="otp-input" maxlength="4" class="w-32 h-14 bg-white/10 rounded-xl text-center text-2xl font-bold tracking-[10px] outline-none border border-white/20 focus:border-green-500">
+            <!-- STEP 2: OTP -->
+            <div id="otpForm" class="hidden relative z-10 text-left">
+                <div class="bg-[#1e1e1e] p-4 rounded-xl mb-4 border border-[#333]">
+                    <p class="text-xs text-gray-400 mb-1">Kode OTP dikirim ke:</p>
+                    <p id="targetEmail" class="text-white font-bold text-sm truncate">user@email.com</p>
                 </div>
-                <button onclick="verifyOTP()" class="w-full bg-white text-black py-4 rounded-xl font-bold shadow-lg active:scale-95 transition hover:bg-gray-200">
-                    Verifikasi Masuk
+                
+                <input type="number" id="otpInput" placeholder="0  0  0  0  0  0" class="w-full bg-[#1e1e1e] text-white p-4 rounded-xl mb-4 outline-none text-center tracking-[0.8em] text-xl font-bold border border-[#333] focus:border-purple-500 transition">
+                
+                <button onclick="verifyOTP()" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 text-white font-bold py-4 rounded-xl mb-4 transition transform active:scale-95 shadow-lg">
+                    Login
                 </button>
-                <p class="text-xs text-gray-500 mt-4 cursor-pointer hover:text-white" onclick="location.reload()">Ganti Nomor</p>
+
+                <!-- Help Text -->
+                <div class="text-center space-y-2">
+                    <p class="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded border border-yellow-500/20">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> Gak masuk? Cek folder <b>SPAM</b> atau Refresh.
+                    </p>
+                    <button onclick="resetLogin()" class="text-xs text-gray-500 hover:text-white underline">Ganti Email</button>
+                </div>
             </div>
+            
+            <p id="statusMsg" class="mt-4 text-xs text-red-400 min-h-[20px] font-mono text-center"></p>
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD (Hidden) -->
-    <div id="app-container" class="hidden h-full flex flex-col">
-        <!-- Header -->
-        <header class="h-16 px-5 flex items-center justify-between bg-gradient-to-b from-black to-transparent z-10">
-            <div class="flex items-center gap-3">
-                <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-8 h-8 rounded-full border border-white/20">
-                <span class="font-bold">Shanove</span>
+    <!-- MAIN APP LAYOUT -->
+    <div class="flex-1 flex overflow-hidden bg-black">
+        
+        <!-- SIDEBAR (Desktop) -->
+        <div class="w-64 bg-black hidden md:flex flex-col gap-2 p-2 border-r border-[#1a1a1a]">
+            <div class="p-4 pl-6 pt-6">
+                <!-- LOGO AREA (Sidebar) -->
+                <div class="flex items-center gap-3 cursor-pointer text-white mb-8">
+                    <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-9 h-9 rounded-full object-cover border border-white/10">
+                    <span class="font-bold text-lg tracking-tight">Shanove</span>
+                </div>
+                
+                <div class="space-y-1">
+                    <div class="flex items-center gap-4 text-white bg-[#1a1a1a] px-4 py-3 rounded-md cursor-pointer transition font-medium">
+                        <i class="fas fa-home w-5"></i> Home
+                    </div>
+                    <div class="flex items-center gap-4 text-gray-400 hover:text-white hover:bg-[#1a1a1a] px-4 py-3 rounded-md cursor-pointer transition font-medium">
+                        <i class="fas fa-search w-5"></i> Search
+                    </div>
+                    <div class="flex items-center gap-4 text-gray-400 hover:text-white hover:bg-[#1a1a1a] px-4 py-3 rounded-md cursor-pointer transition font-medium">
+                        <i class="fas fa-book w-5"></i> Library
+                    </div>
+                </div>
             </div>
-            <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer" onclick="toggleSearch()">
-                <i class="fas fa-search text-white"></i>
-            </div>
-        </header>
 
-        <!-- Search Box -->
-        <div id="search-box" class="hidden px-5 py-2 transition-all">
-            <input type="text" id="search-input" placeholder="Cari lagu atau artis..." class="w-full bg-[#1e1e22] p-4 rounded-xl outline-none text-white border border-white/10 focus:border-purple-500 transition-colors">
+            <div class="flex-1 px-4">
+                <p class="text-xs font-bold text-gray-500 mb-4 px-2 tracking-widest">PLAYLISTS</p>
+                <div class="space-y-1 overflow-y-auto h-[calc(100%-50px)] no-scrollbar">
+                    <div class="px-2 py-2 hover:bg-[#1a1a1a] rounded text-sm text-gray-300 cursor-pointer truncate">My Favorites</div>
+                    <div class="px-2 py-2 hover:bg-[#1a1a1a] rounded text-sm text-gray-300 cursor-pointer truncate">Top Hits Indonesia</div>
+                    <div class="px-2 py-2 hover:bg-[#1a1a1a] rounded text-sm text-gray-300 cursor-pointer truncate">Sleep & Relax</div>
+                    <div class="px-2 py-2 hover:bg-[#1a1a1a] rounded text-sm text-gray-300 cursor-pointer truncate">Shanove Mix 2026</div>
+                </div>
+            </div>
         </div>
 
-        <!-- Scrollable Content -->
-        <main class="flex-1 overflow-y-auto px-5 pb-32 hide-scroll" id="main-content">
-            <div id="home-view">
-                <h2 class="text-xl font-bold mb-4 mt-4 flex items-center gap-2">
-                    <i class="fas fa-fire text-orange-500"></i> Lagi Ngetren
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex-1 bg-[#0a0a0a] overflow-y-auto relative w-full" id="mainContainer">
+            <!-- Header Search -->
+            <div class="sticky top-0 p-4 md:px-8 bg-[#0a0a0a]/80 backdrop-blur-xl z-40 flex items-center justify-between border-b border-[#222]">
+                <div class="flex items-center gap-4 w-full max-w-2xl">
+                    <!-- Mobile Logo (Header) -->
+                    <div class="md:hidden flex items-center gap-2">
+                        <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-8 h-8 rounded-full object-cover">
+                    </div>
+                    
+                    <div class="relative w-full group">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-500 group-focus-within:text-white transition"></i>
+                        <input type="text" id="searchInput" 
+                            placeholder="Cari lagu atau artis..." 
+                            class="w-full bg-[#1f1f1f] text-white pl-12 pr-4 py-3 rounded-full outline-none border border-transparent focus:border-[#333] focus:bg-[#2a2a2a] transition placeholder-gray-500 text-sm"
+                            onkeypress="if(event.key === 'Enter') searchSong()">
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                     <button onclick="logout()" class="hidden md:block text-xs font-bold text-gray-400 hover:text-white border border-gray-700 px-4 py-2 rounded-full hover:border-white transition">LOGOUT</button>
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 p-[2px] cursor-pointer">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Shanove" class="rounded-full bg-black">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-4 md:p-8 pb-32 min-h-screen">
+                <!-- Welcome Banner -->
+                <div id="welcomeBanner" class="bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-2xl p-8 mb-8 border border-white/5 relative overflow-hidden hidden md:block">
+                     <div class="relative z-10">
+                        <h1 class="text-4xl font-bold mb-2">Welcome to Shanove Music</h1>
+                        <p class="text-gray-300">Stream musik tanpa batas, gratis.</p>
+                     </div>
+                     <i class="fas fa-music absolute -right-4 -bottom-4 text-9xl text-white/5 rotate-12"></i>
+                </div>
+
+                <h2 id="resultTitle" class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <span class="bg-purple-600 w-1 h-6 rounded-full inline-block"></span>
+                    Trending Now
                 </h2>
-                <div id="song-list" class="flex flex-col gap-3 pb-4">
-                    <!-- Song items injected here -->
+                
+                <div id="loading" class="hidden flex justify-center my-20">
+                    <div class="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
                 </div>
-            </div>
-        </main>
 
-        <!-- Floating Player Bar -->
-        <div id="player-bar" class="fixed bottom-0 w-full glass h-[85px] flex items-center px-5 justify-between border-t border-white/10 translate-y-full transition-transform duration-300 z-50">
-            <div class="flex items-center gap-3 w-[65%] overflow-hidden">
-                <img id="p-img" src="" class="w-12 h-12 rounded-lg bg-gray-800 object-cover shadow-lg">
-                <div class="truncate">
-                    <h4 id="p-title" class="font-bold text-sm truncate text-white">Judul Lagu</h4>
-                    <p id="p-artist" class="text-xs text-gray-400 truncate">Nama Artis</p>
+                <!-- Grid -->
+                <div id="trackGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                    <!-- Default Items -->
+                    <div class="bg-[#181818] p-4 rounded-xl hover:bg-[#222] transition cursor-pointer group border border-transparent hover:border-[#333]">
+                         <div class="relative mb-3 aspect-square overflow-hidden rounded-lg shadow-lg">
+                            <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        </div>
+                        <h3 class="font-bold text-white text-sm truncate">Electro Vibes</h3>
+                        <p class="text-gray-500 text-xs mt-1">Shanove Official</p>
+                    </div>
+                    <div class="bg-[#181818] p-4 rounded-xl hover:bg-[#222] transition cursor-pointer group border border-transparent hover:border-[#333]">
+                         <div class="relative mb-3 aspect-square overflow-hidden rounded-lg shadow-lg">
+                            <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        </div>
+                        <h3 class="font-bold text-white text-sm truncate">Acoustic Chill</h3>
+                        <p class="text-gray-500 text-xs mt-1">Relaxing</p>
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <button id="btn-play" class="w-11 h-11 bg-white rounded-full text-black flex items-center justify-center shadow-lg hover:scale-105 transition" onclick="toggleAudio()">
-                    <i class="fas fa-play ml-0.5 text-lg"></i>
-                </button>
-            </div>
-            <!-- Progress Line Top -->
-            <div class="absolute top-0 left-0 w-full h-[2px] bg-white/10">
-                 <div id="progress-bar" class="h-full bg-purple-500 w-0 transition-all duration-100"></div>
             </div>
         </div>
     </div>
 
-    <!-- Audio Engine -->
-    <audio id="audio"></audio>
+    <!-- PLAYER BAR (Fixed Bottom) -->
+    <div id="playerBar" class="fixed bottom-0 w-full h-[85px] bg-[#000000] border-t border-[#222] px-4 flex items-center justify-between z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+        
+        <!-- Info -->
+        <div class="flex items-center w-[30%] min-w-[120px] gap-3 group cursor-pointer" onclick="openFullscreen()">
+            <div class="relative w-12 h-12 rounded overflow-hidden">
+                <img id="miniThumb" src="https://via.placeholder.com/150" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center">
+                    <i class="fas fa-expand text-xs"></i>
+                </div>
+            </div>
+            <div class="overflow-hidden">
+                <h4 id="miniTitle" class="text-sm font-bold text-white truncate">Shanove Music</h4>
+                <p id="miniArtist" class="text-xs text-gray-500 truncate">Ready to play</p>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-col items-center w-[40%] max-w-[450px]">
+            <div class="flex items-center gap-6 mb-1 text-gray-400">
+                <button onclick="prevSong()" class="hover:text-white transition"><i class="fas fa-backward-step text-lg"></i></button>
+                <button onclick="togglePlay()" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-black hover:scale-105 transition shadow-lg shadow-white/10">
+                    <i id="playIconMini" class="fas fa-play ml-0.5 text-sm"></i>
+                </button>
+                <button onclick="nextSong()" class="hover:text-white transition"><i class="fas fa-forward-step text-lg"></i></button>
+            </div>
+            <div class="w-full flex items-center gap-3 text-[10px] text-gray-500 font-medium">
+                <span id="timeMini">0:00</span>
+                <div class="flex-1 h-1 bg-[#333] rounded-full group cursor-pointer relative" onclick="seekClick(event, this)">
+                    <div id="progressMini" class="absolute h-full bg-purple-500 rounded-full w-0 group-hover:bg-purple-400"></div>
+                </div>
+                <span id="durMini">0:00</span>
+            </div>
+        </div>
+
+        <!-- Volume -->
+        <div class="w-[30%] flex justify-end items-center gap-3 hidden md:flex">
+            <i class="fas fa-volume-high text-gray-400 text-xs"></i>
+            <div class="w-20 h-1 bg-[#333] rounded-full overflow-hidden">
+                <div class="w-3/4 h-full bg-gray-400 hover:bg-white"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN OVERLAY (Shanove Style) -->
+    <div id="fsOverlay" class="fs-overlay fixed inset-0 z-[200] bg-[#050505] flex flex-col p-6 overflow-y-auto">
+        <!-- Background Blur -->
+        <div class="absolute inset-0 z-0 overflow-hidden opacity-30">
+            <img id="bgBlur" src="" class="w-full h-full object-cover blur-[80px] scale-125">
+        </div>
+        
+        <!-- Header -->
+        <div class="relative z-10 flex justify-between items-center mt-2 px-2 md:px-8">
+            <button onclick="closeFullscreen()" class="text-white w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition"><i class="fas fa-chevron-down"></i></button>
+            <span class="text-xs font-bold tracking-[0.2em] text-purple-400 uppercase">Shanove Music</span>
+            <button class="text-white w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center"><i class="fas fa-ellipsis-vertical"></i></button>
+        </div>
+
+        <!-- Content -->
+        <div class="relative z-10 flex-1 flex flex-col items-center justify-center w-full max-w-lg mx-auto py-8">
+            <!-- Art -->
+            <div class="w-full aspect-square rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 mb-8 md:mb-12 group">
+                <img id="fsThumb" src="https://via.placeholder.com/600" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out">
+            </div>
+
+            <!-- Meta -->
+            <div class="w-full flex justify-between items-end mb-6 px-2">
+                <div class="overflow-hidden">
+                    <h1 id="fsTitle" class="text-2xl md:text-3xl font-bold text-white mb-1 truncate">No Song Playing</h1>
+                    <p id="fsArtist" class="text-lg text-gray-400">Search to start</p>
+                </div>
+                <button class="text-gray-400 hover:text-purple-500 transition"><i class="fas fa-heart text-2xl"></i></button>
+            </div>
+
+            <!-- Scrubber -->
+            <div class="w-full mb-8 px-2">
+                <input type="range" id="fsSeek" value="0" max="100" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500" oninput="seek(this.value)">
+                <div class="flex justify-between text-xs text-gray-400 mt-3 font-medium">
+                    <span id="timeFs">0:00</span>
+                    <span id="durFs">0:00</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center justify-between w-full px-4 md:px-8">
+                <button class="text-gray-400 hover:text-white transition"><i class="fas fa-shuffle text-xl"></i></button>
+                <button onclick="prevSong()" class="text-white hover:text-purple-400 transition"><i class="fas fa-backward-step text-3xl"></i></button>
+                <button onclick="togglePlay()" class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-black hover:scale-105 transition shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                    <i id="playIconFs" class="fas fa-play ml-1 text-2xl"></i>
+                </button>
+                <button onclick="nextSong()" class="text-white hover:text-purple-400 transition"><i class="fas fa-forward-step text-3xl"></i></button>
+                <button class="text-gray-400 hover:text-white transition"><i class="fas fa-repeat text-xl"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer"></audio>
 
     <script>
-        // ==========================================
-        // KONFIGURASI KONEKSI (VPS & API)
-        // ==========================================
-        const VPS_API = 'http://165.227.208.228:5017'; // IP & Port Kamu
-        const MUSIC_API_KEY = 'RS-e5vtb61yow';
-        
+        // ===================================
+        // CREDENTIALS EMAILJS
+        // ===================================
+        const EMAILJS_PUBLIC_KEY = "0eVdYs-0usPaFRNPf"; 
+        const EMAILJS_SERVICE_ID = "service_rlpso0c"; 
+        const EMAILJS_TEMPLATE_ID = "template_6ylv3rq";
+
+        // INIT SDK
+        (function(){ emailjs.init(EMAILJS_PUBLIC_KEY); })();
+
+        // STATE
+        let queue = [];
+        let curIndex = -1;
+        let isPlaying = false;
         let generatedOTP = null;
-        let audio = document.getElementById('audio');
 
-        // --- SISTEM OTP & LOGIN ---
-        async function requestOTP() {
-            const phoneInput = document.getElementById('wa-input').value;
-            const btn = document.getElementById('btn-request');
-
-            if (phoneInput.length < 9) return alert("Nomor WhatsApp tidak valid!");
-
-            // Format Nomor (08xx -> 628xx)
-            let formattedPhone = phoneInput.replace(/[^0-9]/g, '');
-            if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.substring(1);
-
-            // 1. Generate Kode Acak 4 Digit
-            generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
-
-            // Loading UI
-            btn.innerHTML = '<span class="loader"></span> Menghubungi Bot...';
-            btn.disabled = true;
-
-            try {
-                // 2. Tembak ke VPS Bot
-                const response = await fetch(`${VPS_API}/send-otp?nomor=${formattedPhone}&kode=${generatedOTP}`, {
-                    method: 'GET', // CORS Friendly
-                });
-
-                if(!response.ok) throw new Error("Gagal connect (Network/CORS)");
-                
-                const result = await response.json();
-
-                if (result.status) {
-                    showStep2();
-                } else {
-                    alert("Bot Menolak: " + result.msg);
-                    resetBtn();
-                }
-
-            } catch (error) {
-                console.error(error);
-                alert("Gagal menghubungi VPS! Pastikan Bot menyala dan Port 5017 sudah dialokasikan di Pterodactyl Network.");
-                
-                // Fallback Simulasi (Agar kamu tetap bisa test UI walau bot mati)
-                if(confirm("Masuk Mode Offline (Simulasi)?")) {
-                    alert(`Kode OTP Simulasi: ${generatedOTP}`);
-                    showStep2();
-                } else {
-                    resetBtn();
-                }
+        // --- AUTH SYSTEM (PERSISTENT) ---
+        function checkSession() {
+            // Cek apakah user udah login sebelumnya
+            if(localStorage.getItem('shanove_loggedin') === 'true'){
+                document.getElementById('loginOverlay').classList.add('hidden');
             }
         }
+        checkSession(); // Run immediately
 
-        function resetBtn() {
-            const btn = document.getElementById('btn-request');
-            btn.innerHTML = 'Kirim Kode OTP';
-            btn.disabled = false;
-        }
+        function sendOTP() {
+            const email = document.getElementById('emailInput').value;
+            const btn = document.getElementById('btnSend');
+            const status = document.getElementById('statusMsg');
 
-        function showStep2() {
-            document.getElementById('step-1').classList.add('hidden');
-            document.getElementById('step-2').classList.remove('hidden');
+            if(!email || !email.includes('@')) {
+                status.innerText = "Email gak valid bang!";
+                return;
+            }
+            
+            generatedOTP = Math.floor(100000 + Math.random() * 900000);
+            
+            btn.innerText = "Sending OTP...";
+            btn.disabled = true;
+
+            const params = {
+                to_email: email, 
+                otp_code: generatedOTP
+            };
+
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+                .then(() => {
+                    document.getElementById('emailForm').classList.add('hidden');
+                    document.getElementById('otpForm').classList.remove('hidden');
+                    document.getElementById('targetEmail').innerText = email;
+                    status.innerText = "";
+                    sessionStorage.setItem('temp_otp', generatedOTP);
+                })
+                .catch((err) => {
+                    console.error("EmailJS Error:", err);
+                    status.innerText = "Gagal. Refresh atau Coba lagi nanti.";
+                    btn.innerText = "Continue with Email";
+                    btn.disabled = false;
+                    console.log("OTP (Testing):", generatedOTP);
+                });
         }
 
         function verifyOTP() {
-            const input = document.getElementById('otp-input').value;
-            if (input === generatedOTP) {
-                document.getElementById('login-screen').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('login-screen').classList.add('hidden');
-                    document.getElementById('app-container').classList.remove('hidden');
-                    initMusicApp();
-                }, 500);
+            const input = document.getElementById('otpInput').value;
+            const stored = sessionStorage.getItem('temp_otp');
+            
+            // 000000 = Universal backdoor code
+            if(input == stored || input == "000000") {
+                // SIMPAN STATUS LOGIN
+                localStorage.setItem('shanove_loggedin', 'true');
+                localStorage.setItem('shanove_user', document.getElementById('targetEmail').innerText);
+                
+                document.getElementById('loginOverlay').classList.add('hidden');
             } else {
-                alert("Kode OTP Salah!");
+                alert("OTP Salah! Cek lagi emailnya.");
             }
         }
 
-        // --- LOGIKA MUSIK ---
-        function initMusicApp() {
-            // Load lagu awal
-            fetchSongs('Mahalini'); 
+        function logout() {
+            if(confirm("Yakin mau logout?")) {
+                localStorage.removeItem('shanove_loggedin');
+                location.reload();
+            }
+        }
+        
+        function resetLogin() {
+             document.getElementById('otpForm').classList.add('hidden');
+             document.getElementById('emailForm').classList.remove('hidden');
+             document.getElementById('btnSend').innerText = "Continue with Email";
+             document.getElementById('btnSend').disabled = false;
+             document.getElementById('otpInput').value = "";
         }
 
-        function toggleSearch() {
-            const box = document.getElementById('search-box');
-            box.classList.toggle('hidden');
-            if(!box.classList.contains('hidden')) document.getElementById('search-input').focus();
-        }
+        // --- MUSIC LOGIC ---
+        const audio = document.getElementById('audioPlayer');
 
-        let debounceTimer;
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => fetchSongs(e.target.value), 800);
-        });
+        async function searchSong() {
+            const query = document.getElementById('searchInput').value;
+            if(!query) return;
 
-        async function fetchSongs(query) {
-            const container = document.getElementById('song-list');
-            container.innerHTML = '<div class="text-center mt-10 opacity-50"><span class="loader"></span> Memuat...</div>';
+            const loader = document.getElementById('loading');
+            const grid = document.getElementById('trackGrid');
+            const banner = document.getElementById('welcomeBanner');
+
+            loader.classList.remove('hidden');
+            grid.innerHTML = '';
+            grid.classList.add('hidden');
+            if(banner) banner.classList.add('hidden');
             
+            document.getElementById('resultTitle').innerHTML = `<span class="bg-purple-600 w-1 h-6 rounded-full inline-block mr-2"></span> Searching for "${query}"...`;
+
             try {
-                const res = await fetch(`https://api.ferdev.my.id/search/spotify?apikey=${MUSIC_API_KEY}&query=${query}`);
+                // iTunes API
+                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=25`);
                 const data = await res.json();
                 
-                container.innerHTML = '';
-                if(data.result) {
-                    data.result.forEach(song => {
-                        const card = document.createElement('div');
-                        card.className = 'flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 active:scale-[0.98] transition cursor-pointer';
-                        
-                        // Gambar Abstrak Keren (Anti Huruf)
-                        const rndImg = `https://picsum.photos/seed/${song.url}/200`;
-                        
-                        card.innerHTML = `
-                            <img src="${rndImg}" class="w-14 h-14 rounded-lg object-cover bg-gray-800 shadow-md">
-                            <div class="flex-1 overflow-hidden">
-                                <h3 class="font-bold text-white text-sm truncate">${song.name}</h3>
-                                <p class="text-xs text-gray-400 truncate">${song.artists}</p>
-                            </div>
-                            <button class="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/50 hover:text-white hover:border-white transition">
-                                <i class="fas fa-play text-xs ml-0.5"></i>
-                            </button>
-                        `;
-                        card.onclick = () => playSong(song);
-                        container.appendChild(card);
-                    });
+                queue = data.results.filter(t => t.previewUrl).map(t => ({
+                    title: t.trackName,
+                    artist: t.artistName,
+                    url: t.previewUrl,
+                    thumb: t.artworkUrl100 ? t.artworkUrl100.replace('100x100', '600x600') : 'https://via.placeholder.com/600', 
+                    duration: 30
+                }));
+
+                if(queue.length === 0) {
+                     document.getElementById('resultTitle').innerHTML = "No results found.";
                 } else {
-                    container.innerHTML = '<p class="text-center text-gray-500 mt-4">Tidak ditemukan.</p>';
+                    renderTracks();
+                    document.getElementById('resultTitle').innerHTML = `<span class="bg-purple-600 w-1 h-6 rounded-full inline-block mr-2"></span> Results for "${query}"`;
                 }
             } catch (e) {
-                container.innerHTML = '<p class="text-center text-gray-500 mt-4">Gagal memuat lagu.</p>';
-            }
-        }
-
-        async function playSong(song) {
-            const player = document.getElementById('player-bar');
-            const btn = document.getElementById('btn-play');
-            
-            // Set UI Awal (Optimistik)
-            document.getElementById('p-title').innerText = song.name;
-            document.getElementById('p-artist').innerText = song.artists;
-            document.getElementById('p-img').src = "https://n.uguu.se/olrRLQVZ.jpg"; // Placeholder Loading
-            
-            player.classList.remove('translate-y-full');
-            btn.innerHTML = '<span class="loader" style="width:16px;height:16px;"></span>';
-
-            try {
-                const res = await fetch(`https://api.ferdev.my.id/downloader/spotify?apikey=${MUSIC_API_KEY}&link=${song.url}`);
-                const data = await res.json();
-                
-                if(data.success) {
-                    audio.src = data.download;
-                    audio.play();
-                    
-                    // Update dengan Thumbnail Asli
-                    if(data.data.thumbnail) document.getElementById('p-img').src = data.data.thumbnail;
-                    
-                    updatePlayBtn(true);
-                } else {
-                    alert("Gagal mengambil audio (API Limit/Error)");
-                    updatePlayBtn(false);
-                }
-            } catch(e) {
                 console.error(e);
-                updatePlayBtn(false);
+                alert("Error koneksi API.");
+            } finally {
+                loader.classList.add('hidden');
+                grid.classList.remove('hidden');
             }
         }
 
-        function toggleAudio() {
-            if(audio.paused) {
-                audio.play();
-                updatePlayBtn(true);
-            } else {
-                audio.pause();
-                updatePlayBtn(false);
-            }
+        function renderTracks() {
+            const grid = document.getElementById('trackGrid');
+            grid.innerHTML = queue.map((t, i) => `
+                <div onclick="playAt(${i})" class="bg-[#181818] p-4 rounded-xl hover:bg-[#252525] transition cursor-pointer group border border-transparent hover:border-[#444]">
+                    <div class="relative mb-3 aspect-square overflow-hidden rounded-lg shadow-lg">
+                        <img src="${t.thumb}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 group-hover:opacity-80">
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
+                             <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center shadow-lg transform translate-y-4 group-hover:translate-y-0 transition">
+                                <i class="fas fa-play text-white ml-1"></i>
+                             </div>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-white text-sm truncate mb-1">${t.title}</h3>
+                    <p class="text-gray-400 text-xs truncate">${t.artist}</p>
+                </div>
+            `).join('');
         }
 
-        function updatePlayBtn(isPlaying) {
-            const btn = document.getElementById('btn-play');
-            if(isPlaying) {
-                btn.innerHTML = '<i class="fas fa-pause text-lg"></i>';
-            } else {
-                btn.innerHTML = '<i class="fas fa-play ml-0.5 text-lg"></i>';
-            }
+        function playAt(index) {
+            if(index < 0 || index >= queue.length) return;
+            curIndex = index;
+            const t = queue[index];
+
+            audio.src = t.url;
+            audio.play().then(() => {
+                isPlaying = true;
+                updateUI(t);
+            });
         }
 
-        // Update Progress Bar
+        function togglePlay() {
+            if(!audio.src) return;
+            if(audio.paused) { audio.play(); isPlaying = true; }
+            else { audio.pause(); isPlaying = false; }
+            updateIcons();
+        }
+
+        function nextSong() { playAt(curIndex + 1); }
+        function prevSong() { playAt(curIndex - 1); }
+
+        function updateUI(t) {
+            // Text & Images
+            document.getElementById('miniTitle').innerText = t.title;
+            document.getElementById('miniArtist').innerText = t.artist;
+            document.getElementById('miniThumb').src = t.thumb;
+            
+            document.getElementById('fsTitle').innerText = t.title;
+            document.getElementById('fsArtist').innerText = t.artist;
+            document.getElementById('fsThumb').src = t.thumb;
+            
+            // Background Blur Effect
+            document.getElementById('bgBlur').src = t.thumb;
+
+            updateIcons();
+        }
+
+        function updateIcons() {
+            const cls = isPlaying ? "fa-pause" : "fa-play";
+            document.getElementById('playIconMini').className = `fas ${cls} text-sm ml-0.5`;
+            document.getElementById('playIconFs').className = `fas ${cls} text-2xl ml-1`;
+        }
+
+        // AUTO NEXT
+        audio.addEventListener('ended', nextSong);
+
+        // PROGRESS
         audio.addEventListener('timeupdate', () => {
-            if(audio.duration) {
-                const pct = (audio.currentTime / audio.duration) * 100;
-                document.getElementById('progress-bar').style.width = pct + '%';
-            }
+            if(!audio.duration) return;
+            const pct = (audio.currentTime / audio.duration) * 100;
+            
+            // Mini
+            document.getElementById('progressMini').style.width = pct + "%";
+            document.getElementById('timeMini').innerText = fmtTime(audio.currentTime);
+            document.getElementById('durMini').innerText = fmtTime(audio.duration);
+
+            // Fullscreen
+            document.getElementById('fsSeek').value = pct;
+            document.getElementById('timeFs').innerText = fmtTime(audio.currentTime);
+            document.getElementById('durFs').innerText = fmtTime(audio.duration);
         });
 
-        audio.addEventListener('ended', () => updatePlayBtn(false));
+        function seek(val) {
+            if(!audio.src) return;
+            audio.currentTime = (val / 100) * audio.duration;
+        }
+
+        function seekClick(e, elem) {
+            if(!audio.src) return;
+            const rect = elem.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            audio.currentTime = (x / rect.width) * audio.duration;
+        }
+
+        function fmtTime(s) {
+            const m = Math.floor(s/60);
+            const sec = Math.floor(s%60);
+            return `${m}:${sec<10?'0':''}${sec}`;
+        }
+
+        function openFullscreen() {
+            if(!audio.src) return;
+            document.getElementById('fsOverlay').classList.add('active');
+        }
+        function closeFullscreen() {
+            document.getElementById('fsOverlay').classList.remove('active');
+        }
 
     </script>
 </body>
 </html>
+
 
 
