@@ -6,52 +6,35 @@
     <title>Shanove Music</title>
     
     <!-- ICONS -->
-    <link rel="icon" href="https://via.placeholder.com/150/8b5cf6/ffffff?text=S" type="image/png">
-    <link rel="apple-touch-icon" href="https://via.placeholder.com/150/8b5cf6/ffffff?text=S">
+    <link rel="icon" id="favicon" href="https://via.placeholder.com/150" type="image/jpeg">
+    <link rel="apple-touch-icon" id="appleIcon" href="https://via.placeholder.com/150">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
 
     <!-- LIBS -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
+    <!-- FIREBASE (Wajib urutan begini) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
         
-        /* APP SHELL LOCK */
         html, body { height: 100%; width: 100%; overflow: hidden; overscroll-behavior: none; font-family: 'Outfit', sans-serif; background: #000; color: white; -webkit-tap-highlight-color: transparent; user-select: none; }
-        
-        /* SCROLL AREAS */
         .scroll-area { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* ANIMATIONS */
         .fs-overlay { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; z-index: 200; }
         .fs-overlay.active { transform: translateY(0); }
-        
-        /* LYRICS STYLING */
-        .lyrics-line { 
-            transition: all 0.3s ease; 
-            opacity: 0.5; 
-            transform: scale(0.95); 
-            cursor: pointer;
-            padding: 8px 0;
-        }
-        .lyrics-line.active { 
-            opacity: 1; 
-            transform: scale(1.05); 
-            color: #a855f7; 
-            text-shadow: 0 0 20px rgba(168, 85, 247, 0.4); 
-            font-weight: bold;
-        }
-        
-        /* SLIDER */
         input[type=range] { -webkit-appearance: none; background: transparent; height: 20px; cursor: pointer; }
         input[type=range]::-webkit-slider-runnable-track { height: 4px; background: #333; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 0; height: 0; box-shadow: -100vw 0 0 100vw #a855f7; background: #fff; }
         #fsSeek::-webkit-slider-thumb { width: 12px; height: 12px; border-radius: 50%; background: white; margin-top: -4px; box-shadow: none; -webkit-appearance: none; }
+        .lyrics-line { transition: all 0.3s ease; opacity: 0.5; padding: 8px 0; transform-origin: left; cursor: pointer; }
+        .lyrics-line.active { opacity: 1; transform: scale(1.05); color: #a855f7; font-weight: bold; text-shadow: 0 0 15px rgba(168, 85, 247, 0.3); }
     </style>
 </head>
 <body class="fixed inset-0">
@@ -60,29 +43,36 @@
     <div id="loginOverlay" class="fixed inset-0 z-[300] bg-black flex items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
         <div class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div>
         <div class="bg-[#121212] border border-[#333] p-8 rounded-2xl w-full max-w-md text-center shadow-2xl relative z-10">
-            <div class="w-20 h-20 rounded-full mb-3 shadow-lg bg-gradient-to-tr from-purple-600 to-blue-600 flex items-center justify-center text-3xl font-bold mx-auto">S</div>
+            <img id="loginLogo" src="https://via.placeholder.com/150" class="w-24 h-24 rounded-full mb-4 shadow-lg border-2 border-purple-500/30 object-cover mx-auto">
             <h1 class="text-2xl font-bold mb-6">Shanove Music</h1>
             
             <div id="emailForm" class="relative z-10 text-left">
-                <input type="email" id="emailInput" placeholder="Email..." class="w-full bg-[#1e1e1e] text-white p-3 rounded-xl mb-3 outline-none border border-[#333] focus:border-purple-500 text-center">
-                <button onclick="sendOTP()" id="btnSend" class="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95">Masuk</button>
+                <input type="email" id="emailInput" placeholder="Masukan Email..." class="w-full bg-[#1e1e1e] text-white p-3 rounded-xl mb-3 outline-none border border-[#333] focus:border-purple-500 text-center">
+                <button onclick="sendOTP()" id="btnSend" class="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95">Masuk / Daftar</button>
             </div>
 
             <div id="otpForm" class="hidden relative z-10 text-left">
-                <p class="text-center text-gray-400 mb-2 text-xs">Kode ke <b id="targetEmail"></b></p>
+                <p class="text-center text-gray-400 mb-2 text-xs">Kode dikirim ke <b id="targetEmail"></b></p>
                 <input type="number" id="otpInput" placeholder="000000" class="w-full bg-[#1e1e1e] text-white p-3 rounded-xl mb-3 outline-none text-center tracking-[0.5em] text-xl font-bold border border-[#333] focus:border-purple-500">
-                <button onclick="verifyOTP()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl mb-3 shadow-lg transition-transform active:scale-95">Verifikasi</button>
+                <button onclick="verifyOTP()" id="btnVerify" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl mb-3 shadow-lg transition-transform active:scale-95">Verifikasi</button>
+                <div class="text-center"><button onclick="location.reload()" class="text-xs text-gray-500 hover:text-white underline">Ubah Email</button></div>
             </div>
         </div>
     </div>
 
-    <!-- AUDIO LOADER -->
-    <div id="audioLoader" class="fixed top-20 left-1/2 -translate-x-1/2 bg-[#222] border border-purple-500/50 text-white px-4 py-2 rounded-full shadow-2xl z-[250] hidden flex items-center gap-3 transition-all transform scale-95">
+    <!-- LOADER -->
+    <div id="globalLoader" class="fixed inset-0 z-[400] bg-black flex flex-col items-center justify-center hidden">
+        <i class="fas fa-circle-notch fa-spin text-purple-500 text-4xl mb-4"></i>
+        <p class="text-gray-400 text-sm">Menyiapkan Profil...</p>
+    </div>
+
+    <!-- AUDIO LOADER TOAST -->
+    <div id="audioLoader" class="fixed top-24 left-1/2 -translate-x-1/2 bg-[#222]/90 border border-purple-500/50 text-white px-5 py-2 rounded-full shadow-2xl z-[250] hidden flex items-center gap-3 backdrop-blur-md">
         <i class="fas fa-circle-notch fa-spin text-purple-500"></i>
         <span class="text-xs font-bold">Memuat Audio...</span>
     </div>
 
-    <!-- TITIK TIGA MENU -->
+    <!-- MENU MODAL -->
     <div id="menuModal" class="fixed inset-0 z-[260] bg-black/80 hidden flex flex-col justify-end" onclick="closeMenu()">
         <div class="bg-[#1a1a1a] rounded-t-2xl p-6 animate-slide-up" onclick="event.stopPropagation()">
             <div class="flex items-center gap-4 mb-6 border-b border-[#333] pb-4">
@@ -109,26 +99,33 @@
             
             <!-- HOME -->
             <div id="pageHome" class="min-h-full p-4">
-                <div class="flex items-center gap-3 mb-6 pt-2">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-blue-600 flex items-center justify-center font-bold text-sm">S</div>
-                    <h1 class="text-xl font-bold">Beranda</h1>
+                <div class="flex items-center justify-between mb-6 pt-2">
+                    <div class="flex items-center gap-3">
+                        <img id="homeProfilePic" src="https://via.placeholder.com/50" class="w-9 h-9 rounded-full border border-white/20 object-cover cursor-pointer" onclick="switchPage('Profile')">
+                        <div>
+                            <p class="text-[10px] text-gray-400">Halo,</p>
+                            <h1 id="homeUsername" class="text-md font-bold truncate w-32">User</h1>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-6 mb-8 relative overflow-hidden border border-white/10 shadow-lg">
+                <div class="bg-gradient-to-r from-purple-900 to-blue-900 rounded-2xl p-6 mb-8 relative overflow-hidden border border-white/10 shadow-lg">
                     <div class="relative z-10">
-                        <h1 class="text-2xl font-bold mb-2">Karaoke Mode 🎤</h1>
-                        <p class="text-gray-200 text-sm mb-4">Lirik Synced, Audio Full, Auto Next.</p>
+                        <h1 class="text-2xl font-bold mb-2">Shanove Sync</h1>
+                        <p class="text-gray-200 text-sm mb-4">Profil tersimpan di Cloud.</p>
                         <button onclick="searchMusic('Top Hits Indonesia 2025')" class="bg-white text-black px-6 py-2 rounded-full text-sm font-bold hover:scale-105 transition">Play Hits</button>
                     </div>
-                    <i class="fas fa-microphone-alt absolute -right-4 -bottom-4 text-8xl text-white/10 rotate-12"></i>
+                    <i class="fas fa-cloud absolute -right-4 -bottom-4 text-8xl text-white/10 rotate-12"></i>
                 </div>
 
-                <h2 class="font-bold text-lg mb-4">Mood Playlist</h2>
+                <h2 class="font-bold text-lg mb-4">Playlist Pilihan</h2>
                 <div class="grid grid-cols-2 gap-3 mb-8">
                     <div onclick="searchMusic('Phonk Aggressive')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222] active:scale-95 transition"><div class="w-10 h-10 bg-purple-900 rounded flex items-center justify-center">🏎️</div><span class="text-sm font-bold">Phonk</span></div>
                     <div onclick="searchMusic('Galau Indonesia')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222] active:scale-95 transition"><div class="w-10 h-10 bg-blue-900 rounded flex items-center justify-center">😢</div><span class="text-sm font-bold">Galau</span></div>
                     <div onclick="searchMusic('DJ TikTok Viral')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222] active:scale-95 transition"><div class="w-10 h-10 bg-red-900 rounded flex items-center justify-center">🔥</div><span class="text-sm font-bold">TikTok</span></div>
                     <div onclick="searchMusic('Lofi Sleep')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222] active:scale-95 transition"><div class="w-10 h-10 bg-indigo-900 rounded flex items-center justify-center">💤</div><span class="text-sm font-bold">Sleep</span></div>
+                    <div onclick="searchMusic('J-Pop Anime')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222] active:scale-95 transition"><div class="w-10 h-10 bg-pink-900 rounded flex items-center justify-center">⛩️</div><span class="text-sm font-bold">Anime</span></div>
+                    <div onclick="searchMusic('Western Hits 2025')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222] active:scale-95 transition"><div class="w-10 h-10 bg-green-900 rounded flex items-center justify-center">🌍</div><span class="text-sm font-bold">Barat</span></div>
                 </div>
             </div>
 
@@ -143,16 +140,39 @@
                 </div>
                 <div id="searchLoading" class="hidden flex flex-col items-center justify-center py-20">
                     <i class="fas fa-spinner fa-spin text-3xl text-purple-500 mb-4"></i>
+                    <p class="text-gray-500 text-xs mt-2">Mencari di iTunes...</p>
                 </div>
                 <div id="trackGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pb-20"></div>
             </div>
 
-            <!-- PROFILE -->
-            <div id="pageProfile" class="hidden min-h-full p-4 flex flex-col items-center justify-center">
-                <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-gray-700 to-gray-900 flex items-center justify-center text-4xl mb-4">👤</div>
-                <h2 class="text-2xl font-bold mb-1">Pengguna</h2>
-                <p id="profileEmail" class="text-gray-400 mb-8">user@email.com</p>
-                <button onclick="logout()" class="px-8 py-3 rounded-full border border-red-900 text-red-500 hover:bg-red-900/20 font-bold transition">Logout</button>
+            <!-- PROFILE PAGE -->
+            <div id="pageProfile" class="hidden min-h-full p-4">
+                <h1 class="text-xl font-bold mb-6 pt-2">Profil Saya</h1>
+                
+                <div class="flex flex-col items-center justify-center mb-8">
+                    <div class="relative group">
+                        <img id="profilePicLarge" src="https://via.placeholder.com/150" class="w-28 h-28 rounded-full border-4 border-[#222] shadow-xl object-cover mb-4">
+                        <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer" onclick="document.getElementById('editAvatarInput').focus()">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                    </div>
+                    <h2 id="profileNameDisplay" class="text-2xl font-bold">User</h2>
+                    <p id="profileEmailDisplay" class="text-sm text-gray-400">user@email.com</p>
+                </div>
+
+                <div class="bg-[#181818] p-6 rounded-2xl border border-[#333] space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-500 font-bold uppercase">Username</label>
+                        <input type="text" id="editUsernameInput" class="w-full bg-[#222] text-white p-3 rounded-lg outline-none border border-transparent focus:border-purple-500 mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 font-bold uppercase">Link Foto Profil (URL)</label>
+                        <input type="text" id="editAvatarInput" class="w-full bg-[#222] text-white p-3 rounded-lg outline-none border border-transparent focus:border-purple-500 mt-1" placeholder="https://...">
+                    </div>
+                    <button onclick="saveProfile()" id="btnSaveProfile" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-lg transition">Simpan Perubahan</button>
+                </div>
+
+                <button onclick="logout()" class="w-full mt-6 py-3 rounded-lg border border-red-900/50 text-red-500 hover:bg-red-900/10 font-bold transition">Logout</button>
             </div>
         </div>
 
@@ -218,11 +238,11 @@
                 <button onclick="toggleRepeat()" id="btnRepeat" class="text-gray-400 transition active:scale-90"><i class="fas fa-repeat text-xl"></i></button>
             </div>
 
-            <!-- KARAOKE LYRICS -->
+            <!-- LYRICS -->
             <div class="w-full mx-auto max-w-sm bg-black/20 rounded-2xl p-6 backdrop-blur-md mb-8 min-h-[300px] border border-white/5">
                 <h3 class="font-bold text-gray-400 mb-4 text-xs uppercase tracking-widest text-center">Lirik</h3>
                 <div id="lyricsContainer" class="flex flex-col gap-4 text-center font-bold text-lg h-[250px] overflow-y-auto no-scrollbar scroll-smooth">
-                    <p class="text-gray-500 text-sm">Putar lagu untuk melihat lirik...</p>
+                    <p class="text-gray-500 text-sm mt-10">Putar lagu untuk melihat lirik...</p>
                 </div>
             </div>
         </div>
@@ -231,41 +251,144 @@
     <audio id="audioPlayer" preload="auto" playsinline></audio>
 
     <script>
+        // CONFIG
         const API_KEY = "RS-e5vtb61yow";
         const EMAILJS_KEY = "0eVdYs-0usPaFRNPf"; 
         const EMAILJS_SERVICE = "service_rlpso0c";  
         const EMAILJS_TEMPLATE = "template_6ylv3rq";
 
+        // FIREBASE SETUP (REQUIRED FOR SYNC)
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default';
+
         (function(){ emailjs.init(EMAILJS_KEY); })();
 
-        // --- AUTH ---
-        if(localStorage.getItem('shanove_user')) {
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('profileEmail').innerText = localStorage.getItem('shanove_email') || "User";
-        }
+        // --- AUTH & PROFILE SYNC ---
+        let currentUserEmail = "";
+
+        // 1. Initial Load
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await auth.signInWithCustomToken(__initial_auth_token);
+            } else {
+                await auth.signInAnonymously();
+            }
+            
+            // Cek Local Login
+            const savedEmail = localStorage.getItem('shanove_email');
+            if(savedEmail) {
+                currentUserEmail = savedEmail;
+                document.getElementById('loginOverlay').classList.add('hidden');
+                loadUserProfile(savedEmail); // Load data from Firestore
+            }
+        };
+        initAuth();
+
         function sendOTP() {
-            const email = document.getElementById('emailInput').value;
+            const email = document.getElementById('emailInput').value.trim().toLowerCase();
             const btn = document.getElementById('btnSend');
             if(!email.includes('@')) return alert("Email salah");
+            
             const otp = Math.floor(100000 + Math.random() * 900000);
             btn.innerText = "Mengirim..."; btn.disabled = true;
-            emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {to_email: email, email: email, otp_code: otp}).then(() => {
-                document.getElementById('emailForm').classList.add('hidden');
-                document.getElementById('otpForm').classList.remove('hidden');
-                document.getElementById('targetEmail').innerText = email;
-                sessionStorage.setItem('otp', otp);
-                sessionStorage.setItem('temp_email', email);
-            }, () => { alert("Gagal kirim."); btn.innerText = "Masuk"; btn.disabled = false; });
+            
+            emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {to_email: email, email: email, otp_code: otp})
+                .then(() => {
+                    document.getElementById('emailForm').classList.add('hidden');
+                    document.getElementById('otpForm').classList.remove('hidden');
+                    document.getElementById('targetEmail').innerText = email;
+                    sessionStorage.setItem('otp', otp);
+                    sessionStorage.setItem('temp_email', email);
+                })
+                .catch(() => { alert("Gagal kirim."); btn.innerText = "Masuk"; btn.disabled = false; });
         }
+
         function verifyOTP() {
-            if(document.getElementById('otpInput').value == sessionStorage.getItem('otp')) {
-                localStorage.setItem('shanove_user', 'true');
-                localStorage.setItem('shanove_email', sessionStorage.getItem('temp_email'));
+            const input = document.getElementById('otpInput').value;
+            if(input == sessionStorage.getItem('otp')) {
+                const email = sessionStorage.getItem('temp_email');
+                localStorage.setItem('shanove_email', email);
+                currentUserEmail = email;
+                
+                // Initialize/Load Profile from Firestore
+                loadUserProfile(email);
                 document.getElementById('loginOverlay').classList.add('hidden');
-                location.reload();
             } else alert("Kode Salah");
         }
-        function logout() { localStorage.clear(); location.reload(); }
+
+        // --- FIRESTORE PROFILE LOGIC ---
+        async function loadUserProfile(email) {
+            if(!auth.currentUser) return; // Wait for firebase auth
+            
+            // Clean email for ID (replace dots)
+            const docId = email.replace(/\./g, '_');
+            const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('profiles').doc(docId);
+
+            try {
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    updateProfileUI(data.username, data.avatar, email);
+                } else {
+                    // Create Default
+                    const defaultData = { username: email.split('@')[0], avatar: "https://n.uguu.se/olrRLQVZ.jpg" };
+                    await docRef.set(defaultData);
+                    updateProfileUI(defaultData.username, defaultData.avatar, email);
+                }
+            } catch (e) { console.error("Sync Error:", e); }
+        }
+
+        async function saveProfile() {
+            if(!currentUserEmail) return;
+            
+            const newName = document.getElementById('editUsernameInput').value;
+            const newAv = document.getElementById('editAvatarInput').value;
+            const btn = document.getElementById('btnSaveProfile');
+            
+            if(!newName) return alert("Username wajib diisi");
+            
+            btn.innerText = "Menyimpan..."; btn.disabled = true;
+            
+            const docId = currentUserEmail.replace(/\./g, '_');
+            const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('profiles').doc(docId);
+            
+            try {
+                await docRef.set({ username: newName, avatar: newAv || "https://n.uguu.se/olrRLQVZ.jpg" }, { merge: true });
+                updateProfileUI(newName, newAv, currentUserEmail);
+                alert("Profil Tersimpan!");
+            } catch(e) {
+                alert("Gagal simpan ke cloud.");
+            } finally {
+                btn.innerText = "Simpan Perubahan"; btn.disabled = false;
+            }
+        }
+
+        function updateProfileUI(name, avatar, email) {
+            // Home Header
+            document.getElementById('homeUsername').innerText = name;
+            document.getElementById('homeProfilePic').src = avatar || "https://n.uguu.se/olrRLQVZ.jpg";
+            
+            // Profile Page
+            document.getElementById('profileNameDisplay').innerText = name;
+            document.getElementById('profileEmailDisplay').innerText = email;
+            document.getElementById('profilePicLarge').src = avatar || "https://n.uguu.se/olrRLQVZ.jpg";
+            
+            // Edit Inputs
+            document.getElementById('editUsernameInput').value = name;
+            document.getElementById('editAvatarInput').value = avatar;
+            
+            // App Icons (Optional)
+            document.getElementById('favicon').href = avatar || "https://n.uguu.se/olrRLQVZ.jpg";
+            document.getElementById('loginLogo').src = avatar || "https://n.uguu.se/olrRLQVZ.jpg";
+        }
+
+        function logout() {
+            localStorage.removeItem('shanove_email');
+            location.reload();
+        }
         function resetLogin() { location.reload(); }
 
         // --- NAVIGATION ---
@@ -278,14 +401,14 @@
             document.getElementById('nav' + page).className = "flex flex-col items-center justify-center w-full h-full text-purple-500 cursor-pointer active:scale-95 transition";
         }
 
-        // --- ENGINE ---
+        // --- MUSIC ENGINE V7 (Stable) ---
         const audio = document.getElementById('audioPlayer');
         let queue = [];
         let curIndex = -1;
         let isSeeking = false;
         let isShuffle = false;
         let repeatMode = 0;
-        let syncedLyrics = []; // [{time: 0, text: ""}]
+        let syncedLyrics = [];
 
         // 1. SEARCH ITUNES
         async function searchMusic(query) {
@@ -298,7 +421,7 @@
             grid.innerHTML = "";
 
             try {
-                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=40`);
+                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=60`);
                 const data = await res.json();
                 const uniqueTitles = new Set();
                 queue = data.results.filter(t => {
@@ -340,15 +463,16 @@
             document.getElementById('playerBar').classList.remove('hidden');
             document.getElementById('audioLoader').classList.remove('hidden');
             syncedLyrics = [];
-            renderLyrics(null); // Clear lyrics
+            renderLyrics(null);
+            
+            // Pre-update MediaSession status to 'playing' (trick for background)
+            updateMediaSession(track);
 
             try {
-                // Background: Fetch Lyrics (LRCLIB)
-                fetchLyrics(track.artist, track.title, track.album);
+                fetchLyrics(track.artist, track.title);
 
                 let audioUrl = track.fullAudio;
                 if (!audioUrl) {
-                    // Fetch Audio Ferdev
                     let q = `${track.artist} - ${track.title}`;
                     let sRes = await fetch(`https://api.ferdev.my.id/search/spotify?query=${encodeURIComponent(q)}&apikey=${API_KEY}`);
                     let sJson = await sRes.json();
@@ -367,14 +491,18 @@
                         } else throw new Error("DL Fail");
                     } else throw new Error("Not Found");
                 }
-                playAudioSource(audioUrl, track);
+                
+                audio.src = audioUrl;
+                audio.play();
+                updateIcons(true);
 
             } catch (e) {
                 console.warn("Audio Error", e);
                 if(track.preview) {
-                    playAudioSource(track.preview, track);
+                    audio.src = track.preview;
+                    audio.play();
+                    updateIcons(true);
                 } else {
-                    // AUTO SKIP ON ERROR
                     setTimeout(() => nextSong(), 1000);
                 }
             } finally {
@@ -382,43 +510,24 @@
             }
         }
 
-        function playAudioSource(src, meta) {
-            audio.src = src;
-            audio.play().then(() => updateMediaSession(meta)).catch(() => {});
-            updateIcons(true);
-        }
-
-        // 3. KARAOKE LYRICS (LRCLIB)
+        // 3. LYRICS
         async function fetchLyrics(artist, title) {
             try {
                 const res = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(artist + ' ' + title)}`);
                 const json = await res.json();
-                
-                // Find synced lyrics
                 const match = json.find(i => i.syncedLyrics);
-                if(match && match.syncedLyrics) {
-                    parseLRC(match.syncedLyrics);
-                } else {
-                    renderLyrics("Lirik tidak tersedia.");
-                }
-            } catch (e) {
-                renderLyrics("Gagal memuat lirik.");
-            }
+                if(match && match.syncedLyrics) parseLRC(match.syncedLyrics);
+                else renderLyrics("Lirik tidak tersedia.");
+            } catch (e) { renderLyrics("Gagal memuat lirik."); }
         }
 
         function parseLRC(lrc) {
             const lines = lrc.split('\n');
             syncedLyrics = [];
             const regex = /^\[(\d{2}):(\d{2}(?:\.\d+)?)\](.*)/;
-            
             for(const line of lines) {
                 const m = line.match(regex);
-                if(m) {
-                    const min = parseInt(m[1]);
-                    const sec = parseFloat(m[2]);
-                    const text = m[3].trim();
-                    if(text) syncedLyrics.push({ time: min * 60 + sec, text: text });
-                }
+                if(m) syncedLyrics.push({ time: parseInt(m[1]) * 60 + parseFloat(m[2]), text: m[3].trim() });
             }
             renderLyrics(syncedLyrics);
         }
@@ -429,45 +538,29 @@
                 container.innerHTML = `<p class="text-gray-500 text-sm mt-10">${data || "Memuat..."}</p>`;
                 return;
             }
-            
             container.innerHTML = syncedLyrics.map((l, i) => 
-                `<p id="line-${i}" class="lyrics-line text-xl font-medium text-gray-400 transition-all duration-300 origin-left" onclick="seek(${l.time})">${l.text}</p>`
+                `<p id="line-${i}" class="lyrics-line text-lg font-medium text-gray-400" onclick="seek(${l.time})">${l.text}</p>`
             ).join('');
         }
 
-        // Sync Logic
         audio.addEventListener('timeupdate', () => {
             if(!isSeeking && audio.duration) {
-                // Slider
                 const pct = (audio.currentTime / audio.duration) * 100;
                 document.getElementById('progressMini').style.width = pct + "%";
                 document.getElementById('fsSeek').value = pct;
-                
-                // Time Text
-                const fmt = s => {
-                    if(isNaN(s)) return "0:00";
-                    const m = Math.floor(s/60), sec = Math.floor(s%60);
-                    return `${m}:${sec<10?'0':''}${sec}`;
-                };
-                document.getElementById('timeFs').innerText = fmt(audio.currentTime);
-                document.getElementById('durFs').innerText = fmt(audio.duration);
+                document.getElementById('timeFs').innerText = formatTime(audio.currentTime);
+                document.getElementById('durFs').innerText = formatTime(audio.duration);
 
-                // Lyrics Sync
                 if(syncedLyrics.length > 0) {
                     let activeIndex = -1;
                     for(let i = 0; i < syncedLyrics.length; i++) {
-                        if(audio.currentTime >= syncedLyrics[i].time) activeIndex = i;
-                        else break;
+                        if(audio.currentTime >= syncedLyrics[i].time) activeIndex = i; else break;
                     }
-                    
                     if(activeIndex !== -1) {
-                        // Reset all
-                        document.querySelectorAll('.lyrics-line').forEach(el => el.className = "lyrics-line text-xl font-medium text-gray-400 transition-all duration-300 origin-left");
-                        
-                        // Active
+                        document.querySelectorAll('.lyrics-line').forEach(el => el.className = "lyrics-line text-lg font-medium text-gray-400");
                         const activeEl = document.getElementById(`line-${activeIndex}`);
                         if(activeEl) {
-                            activeEl.className = "lyrics-line active text-2xl font-bold text-white transition-all duration-300 origin-left pl-4 border-l-4 border-purple-500";
+                            activeEl.className = "lyrics-line active text-xl font-bold text-white pl-2 border-l-4 border-purple-500";
                             activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     }
@@ -475,7 +568,7 @@
             }
         });
 
-        // 4. UI
+        // 4. UI & CONTROLS
         function updatePlayerUI(t) {
             document.getElementById('miniTitle').innerText = t.title;
             document.getElementById('miniArtist').innerText = t.artist;
@@ -501,7 +594,6 @@
             }
         }
 
-        // 5. CONTROLS
         function togglePlay() {
             if(audio.paused) { audio.play(); updateIcons(true); } 
             else { audio.pause(); updateIcons(false); }
@@ -514,7 +606,7 @@
         function nextSong() {
             if (queue.length === 0) return;
             let nextIndex = isShuffle ? Math.floor(Math.random() * queue.length) : curIndex + 1;
-            if (repeatMode === 2) nextIndex = curIndex; // Repeat One
+            if (repeatMode === 2) nextIndex = curIndex;
             else if (nextIndex >= queue.length) {
                 if(repeatMode === 1) nextIndex = 0; else return;
             }
@@ -527,9 +619,8 @@
             processAndPlay(prevIndex);
         }
         
-        // Auto Next Handling
         audio.addEventListener('ended', nextSong);
-        audio.addEventListener('error', () => { setTimeout(nextSong, 1500); }); // Skip on error
+        audio.addEventListener('error', () => setTimeout(nextSong, 2000));
 
         function toggleShuffle() { isShuffle = !isShuffle; document.getElementById('btnShuffle').className = isShuffle ? "text-purple-500" : "text-gray-400"; }
         function toggleRepeat() {
@@ -543,8 +634,8 @@
         window.seekInput = (val) => { isSeeking = true; };
         window.seekChange = (val) => { isSeeking = false; if(audio.duration) audio.currentTime = (val/100) * audio.duration; };
         function seek(time) { if(audio.src) audio.currentTime = time; }
+        function formatTime(s) { if(isNaN(s)) return "0:00"; const m = Math.floor(s/60), sec = Math.floor(s%60); return `${m}:${sec<10?'0':''}${sec}`; }
 
-        function showHome() { switchPage('Home'); }
         function openFullscreen() { if(audio.src) document.getElementById('fsOverlay').classList.add('active'); }
         function closeFullscreen() { document.getElementById('fsOverlay').classList.remove('active'); }
         function openMenu() { document.getElementById('menuModal').classList.remove('hidden'); }
