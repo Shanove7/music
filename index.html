@@ -5,201 +5,217 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shanove Music</title>
     
-    <!-- ICONS & PWA -->
+    <!-- PWA & ICONS -->
     <link rel="icon" href="https://n.uguu.se/olrRLQVZ.jpg" type="image/jpeg">
     <link rel="apple-touch-icon" href="https://n.uguu.se/olrRLQVZ.jpg">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="theme-color" content="#000000">
 
-    <!-- LIBRARIES -->
+    <!-- LIBS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
-        body { font-family: 'Outfit', sans-serif; background: #000; color: white; overflow: hidden; overscroll-behavior-y: none; }
+        body { font-family: 'Outfit', sans-serif; background: #000; color: white; overflow: hidden; overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { width: 0px; }
-        .fs-overlay { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1); }
+        
+        .fs-overlay { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0, 0, 0.2, 1); will-change: transform; }
         .fs-overlay.active { transform: translateY(0); }
         
-        /* Loading Animation */
-        .bars { display: flex; justify-content: center; align-items: flex-end; height: 20px; gap: 3px; }
-        .bar { width: 4px; background-color: #a855f7; animation: bounce 1s infinite ease-in-out; }
-        .bar:nth-child(2) { animation-delay: 0.1s; } .bar:nth-child(3) { animation-delay: 0.2s; } .bar:nth-child(4) { animation-delay: 0.3s; }
-        @keyframes bounce { 0%, 100% { height: 5px; } 50% { height: 20px; } }
-
-        /* Range Slider */
-        input[type=range] { -webkit-appearance: none; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; margin-top: -4px; }
+        /* Optimized Slider */
+        input[type=range] { -webkit-appearance: none; background: transparent; height: 20px; overflow: hidden; cursor: pointer; }
         input[type=range]::-webkit-slider-runnable-track { height: 4px; background: #333; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 0; height: 0; box-shadow: -100vw 0 0 100vw #a855f7; background: #fff; }
+        
+        /* Fullscreen Slider specifically needs a thumb */
+        #fsSeek::-webkit-slider-thumb { width: 12px; height: 12px; border-radius: 50%; background: white; margin-top: -4px; box-shadow: none; -webkit-appearance: none; }
+        #fsSeek::-webkit-slider-runnable-track { background: #555; }
+        
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
 <body class="h-screen flex flex-col selection:bg-purple-500 selection:text-white">
 
-    <!-- LOGIN AREA -->
+    <!-- LOGIN OVERLAY -->
     <div id="loginOverlay" class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
         <div class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div>
         <div class="bg-[#121212] border border-[#333] p-8 rounded-2xl w-full max-w-md text-center shadow-2xl relative z-10">
-            <div class="mb-8 flex flex-col items-center justify-center">
-                <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-24 h-24 rounded-full mb-4 shadow-lg border-2 border-purple-500/30 object-cover">
-                <h1 class="text-3xl font-bold">Shanove Music</h1>
-                <p class="text-gray-400 text-sm mt-1">Ferdev Engine V1</p>
+            <div class="mb-6 flex flex-col items-center justify-center">
+                <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-20 h-20 rounded-full mb-3 shadow-lg border-2 border-purple-500/30 object-cover">
+                <h1 class="text-2xl font-bold">Shanove Music</h1>
             </div>
             
             <div id="emailForm" class="relative z-10 text-left">
-                <input type="email" id="emailInput" placeholder="Email kamu..." class="w-full bg-[#1e1e1e] text-white p-4 rounded-xl mb-4 outline-none border border-[#333] focus:border-purple-500 transition text-center">
-                <button onclick="sendOTP()" id="btnSend" class="w-full bg-white hover:bg-gray-200 text-black font-bold py-4 rounded-xl transition shadow-lg">Masuk</button>
+                <input type="email" id="emailInput" placeholder="Email..." class="w-full bg-[#1e1e1e] text-white p-3 rounded-xl mb-3 outline-none border border-[#333] focus:border-purple-500 text-center">
+                <button onclick="sendOTP()" id="btnSend" class="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95">Masuk</button>
             </div>
 
             <div id="otpForm" class="hidden relative z-10 text-left">
-                <p class="text-center text-gray-400 mb-2 text-sm">Kode dikirim ke <b id="targetEmail" class="text-white"></b></p>
-                <input type="number" id="otpInput" placeholder="000000" class="w-full bg-[#1e1e1e] text-white p-4 rounded-xl mb-4 outline-none text-center tracking-[0.5em] text-xl font-bold border border-[#333] focus:border-purple-500 transition">
-                <button onclick="verifyOTP()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl mb-4 transition shadow-lg">Verifikasi</button>
+                <p class="text-center text-gray-400 mb-2 text-xs">Kode ke <b id="targetEmail"></b></p>
+                <input type="number" id="otpInput" placeholder="000000" class="w-full bg-[#1e1e1e] text-white p-3 rounded-xl mb-3 outline-none text-center tracking-[0.5em] text-xl font-bold border border-[#333] focus:border-purple-500">
+                <button onclick="verifyOTP()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl mb-3 shadow-lg transition-transform active:scale-95">Verifikasi</button>
                 <div class="text-center"><button onclick="resetLogin()" class="text-xs text-gray-500 hover:text-white underline">Ubah Email</button></div>
             </div>
-            <div id="statusMsg" class="mt-4 text-xs font-mono text-center text-red-400 hidden"></div>
         </div>
     </div>
 
-    <!-- MAIN UI -->
+    <!-- AUDIO LOADER (TOAST) -->
+    <div id="audioLoader" class="fixed top-20 left-1/2 -translate-x-1/2 bg-[#222] border border-purple-500/50 text-white px-4 py-2 rounded-full shadow-2xl z-[60] hidden flex items-center gap-3 transition-all transform scale-95">
+        <i class="fas fa-circle-notch fa-spin text-purple-500"></i>
+        <div class="flex flex-col">
+            <span class="text-xs font-bold">Memuat Audio...</span>
+            <span class="text-[10px] text-gray-400">Requesting from Ferdev API</span>
+        </div>
+    </div>
+
+    <!-- APP LAYOUT -->
     <div class="flex-1 flex overflow-hidden bg-black">
         <!-- SIDEBAR -->
         <div class="w-64 bg-black hidden md:flex flex-col gap-2 p-2 border-r border-[#1a1a1a]">
             <div class="p-6">
-                <div class="flex items-center gap-3 text-white mb-8">
+                <div class="flex items-center gap-3 text-white mb-6">
                     <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-8 h-8 rounded-full border border-white/10">
                     <span class="font-bold text-lg">Shanove</span>
                 </div>
                 <div class="space-y-1">
                     <div onclick="showHome()" class="flex items-center gap-4 text-white bg-[#1a1a1a] px-4 py-3 rounded-md cursor-pointer hover:bg-[#222]"><i class="fas fa-home w-5"></i> Home</div>
-                    <div class="flex items-center gap-4 text-gray-400 hover:text-white px-4 py-3 rounded-md cursor-pointer"><i class="fas fa-search w-5"></i> Search</div>
                 </div>
             </div>
-            <div class="px-6 flex-1">
-                <p class="text-xs font-bold text-gray-500 mb-4 tracking-widest">SUGGESTED</p>
-                <div class="space-y-3 text-sm text-gray-400">
-                    <div class="cursor-pointer hover:text-white" onclick="searchMusic('Phonk')">🔥 Phonk</div>
-                    <div class="cursor-pointer hover:text-white" onclick="searchMusic('Galau Indonesia')">😢 Galau Indo</div>
-                    <div class="cursor-pointer hover:text-white" onclick="searchMusic('Nadhif Basalamah')">🎸 Nadhif B.</div>
-                    <div class="cursor-pointer hover:text-white" onclick="searchMusic('Tulus')">🎤 Tulus</div>
+            <div class="px-6 flex-1 overflow-y-auto">
+                <p class="text-xs font-bold text-gray-500 mb-3 tracking-widest">GENRES & MOODS</p>
+                <div class="space-y-2 text-sm text-gray-400">
+                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Phonk Aggressive')">🏎️ Phonk</div>
+                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Galau Indonesia')">💔 Indo Galau</div>
+                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('DJ TikTok Viral')">🔥 TikTok Viral</div>
+                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('J-Pop Anime')">⛩️ Anime Hits</div>
+                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Dangdut Koplo')">💃 Dangdut</div>
+                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Rock Metal')">🎸 Rock / Metal</div>
                 </div>
             </div>
         </div>
 
-        <!-- CONTENT -->
+        <!-- MAIN CONTENT -->
         <div class="flex-1 bg-[#0a0a0a] overflow-y-auto relative w-full" id="mainContainer">
-            <div class="sticky top-0 p-4 bg-[#0a0a0a]/90 backdrop-blur-xl z-40 flex items-center justify-between border-b border-[#222]">
-                <div class="flex items-center gap-4 w-full max-w-lg">
-                    <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-8 h-8 rounded-full md:hidden">
+            <div class="sticky top-0 p-3 bg-[#0a0a0a]/90 backdrop-blur-xl z-40 flex items-center justify-between border-b border-[#222]">
+                <div class="flex items-center gap-3 w-full max-w-lg">
+                    <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-8 h-8 rounded-full md:hidden" onclick="showHome()">
                     <div class="relative w-full">
-                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-500"></i>
-                        <input type="text" id="searchInput" placeholder="Cari lagu / artis..." class="w-full bg-[#1f1f1f] text-white pl-12 pr-4 py-3 rounded-full outline-none focus:bg-[#2a2a2a] text-sm border border-transparent focus:border-[#333]" onkeypress="if(event.key === 'Enter') searchMusic(this.value)">
+                        <i class="fas fa-search absolute left-4 top-3 text-gray-500"></i>
+                        <input type="text" id="searchInput" placeholder="Cari judul lagu..." class="w-full bg-[#1f1f1f] text-white pl-10 pr-4 py-2.5 rounded-full outline-none focus:bg-[#2a2a2a] text-sm border border-transparent focus:border-[#333]" onkeypress="if(event.key === 'Enter') searchMusic(this.value)">
                     </div>
                 </div>
                 <button onclick="logout()" class="hidden md:block text-xs font-bold text-gray-400 border border-gray-700 px-4 py-2 rounded-full hover:text-white">LOGOUT</button>
             </div>
 
-            <div class="p-4 pb-36 min-h-screen">
-                <!-- HOME -->
+            <div class="p-3 pb-36 min-h-screen">
+                <!-- HOME SUGGESTIONS -->
                 <div id="homeSuggestions" class="animate-fade-in">
-                    <div class="bg-gradient-to-r from-purple-900 to-blue-900 rounded-2xl p-8 mb-8 relative overflow-hidden border border-white/10">
+                    <div class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-6 mb-6 relative overflow-hidden border border-white/10">
                         <div class="relative z-10">
-                            <h1 class="text-3xl font-bold mb-3">Shanove Music Premium</h1>
-                            <p class="text-gray-200 mb-6">Engine baru. Audio Full. Tanpa Batas.</p>
-                            <button onclick="searchMusic('Top Hits Indonesia')" class="bg-white text-black px-8 py-3 rounded-full font-bold hover:scale-105 transition">Putar Hits</button>
+                            <h1 class="text-2xl md:text-4xl font-bold mb-2">Shanove Music</h1>
+                            <p class="text-gray-200 text-sm mb-4">Hybrid Engine V4: iTunes Visuals + Ferdev Audio.</p>
+                            <button onclick="searchMusic('Top Hits Indonesia')" class="bg-white text-black px-6 py-2 rounded-full text-sm font-bold hover:scale-105 transition">Play Top Hits</button>
                         </div>
-                        <i class="fas fa-compact-disc absolute -right-10 -bottom-10 text-[10rem] text-white/10 rotate-12"></i>
+                        <i class="fas fa-bolt absolute -right-6 -bottom-6 text-[8rem] text-white/10 rotate-12"></i>
+                    </div>
+
+                    <h2 class="font-bold text-lg mb-4 px-1">Coba Playlist Ini</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div onclick="searchMusic('Phonk')" class="bg-[#181818] p-3 rounded-lg cursor-pointer hover:bg-[#222]"><div class="aspect-square bg-purple-800 rounded mb-2 flex items-center justify-center text-3xl">🏎️</div><div class="font-bold text-sm">Phonk</div></div>
+                        <div onclick="searchMusic('Galau')" class="bg-[#181818] p-3 rounded-lg cursor-pointer hover:bg-[#222]"><div class="aspect-square bg-blue-800 rounded mb-2 flex items-center justify-center text-3xl">😢</div><div class="font-bold text-sm">Galau</div></div>
+                        <div onclick="searchMusic('Sheila On 7')" class="bg-[#181818] p-3 rounded-lg cursor-pointer hover:bg-[#222]"><div class="aspect-square bg-yellow-800 rounded mb-2 flex items-center justify-center text-3xl">🎸</div><div class="font-bold text-sm">Nostalgia</div></div>
+                        <div onclick="searchMusic('K-Pop')" class="bg-[#181818] p-3 rounded-lg cursor-pointer hover:bg-[#222]"><div class="aspect-square bg-pink-800 rounded mb-2 flex items-center justify-center text-3xl">🫰</div><div class="font-bold text-sm">K-Pop</div></div>
                     </div>
                 </div>
 
-                <!-- LOADING INDICATOR -->
+                <!-- LOADING -->
                 <div id="loading" class="hidden flex flex-col items-center justify-center py-20">
-                    <div class="bars mb-4">
-                        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                    </div>
-                    <p class="text-gray-400 text-sm animate-pulse">Menghubungi Server Ferdev...</p>
-                </div>
-                
-                <!-- AUDIO PROCESS INDICATOR -->
-                <div id="audioLoader" class="fixed top-24 left-1/2 -translate-x-1/2 bg-[#1f1f1f] border border-purple-500/50 text-white px-6 py-3 rounded-full shadow-2xl z-50 hidden flex items-center gap-3">
-                    <i class="fas fa-circle-notch fa-spin text-purple-500"></i>
-                    <span class="text-xs font-bold">Downloading Audio (Ferdev)...</span>
+                    <i class="fas fa-spinner fa-spin text-3xl text-purple-500 mb-4"></i>
+                    <p class="text-gray-400 text-sm">Mencari di iTunes...</p>
                 </div>
 
-                <!-- RESULT TITLE -->
-                <h2 id="resultTitle" class="text-xl font-bold mb-6 hidden">Hasil Pencarian</h2>
-
-                <!-- GRID -->
-                <div id="trackGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 hidden">
-                    <!-- Javascript will inject here -->
-                </div>
+                <!-- RESULTS GRID -->
+                <h2 id="resultTitle" class="text-lg font-bold mb-4 hidden px-1">Hasil Pencarian</h2>
+                <div id="trackGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 hidden"></div>
             </div>
         </div>
     </div>
 
     <!-- PLAYER BAR -->
-    <div id="playerBar" class="fixed bottom-0 w-full h-[90px] bg-black border-t border-[#222] px-4 flex items-center justify-between z-50">
-        <div class="flex items-center w-[30%] gap-3 cursor-pointer group" onclick="openFullscreen()">
-            <img id="miniThumb" src="https://n.uguu.se/olrRLQVZ.jpg" class="w-14 h-14 rounded object-cover shadow-lg border border-white/10">
+    <div id="playerBar" class="fixed bottom-0 w-full h-[85px] bg-[#090909] border-t border-[#222] px-3 flex items-center justify-between z-50 backdrop-blur-lg">
+        <div class="flex items-center w-[35%] gap-3 cursor-pointer overflow-hidden" onclick="openFullscreen()">
+            <img id="miniThumb" src="https://n.uguu.se/olrRLQVZ.jpg" class="w-12 h-12 rounded bg-[#222] object-cover flex-shrink-0">
             <div class="overflow-hidden">
-                <h4 id="miniTitle" class="text-sm font-bold text-white truncate">Shanove Music</h4>
+                <h4 id="miniTitle" class="text-sm font-bold text-white truncate leading-tight">Shanove Music</h4>
                 <p id="miniArtist" class="text-xs text-gray-500 truncate">Ready to play</p>
             </div>
         </div>
-        <div class="flex flex-col items-center w-[40%]">
-            <div class="flex items-center gap-6 mb-1 text-white">
-                <button onclick="prevSong()" class="hover:text-purple-400"><i class="fas fa-backward-step text-xl"></i></button>
-                <button onclick="togglePlay()" class="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition"><i id="playIconMini" class="fas fa-play ml-0.5"></i></button>
-                <button onclick="nextSong()" class="hover:text-purple-400"><i class="fas fa-forward-step text-xl"></i></button>
+        
+        <div class="flex flex-col items-center w-[30%]">
+            <div class="flex items-center gap-5 mb-1 text-white">
+                <button onclick="prevSong()" class="active:scale-90 transition"><i class="fas fa-backward-step text-lg"></i></button>
+                <button onclick="togglePlay()" class="w-9 h-9 bg-white text-black rounded-full flex items-center justify-center shadow-lg active:scale-90 transition"><i id="playIconMini" class="fas fa-play ml-0.5 text-sm"></i></button>
+                <button onclick="nextSong()" class="active:scale-90 transition"><i class="fas fa-forward-step text-lg"></i></button>
             </div>
-            <div class="w-full h-1 bg-[#333] rounded-full relative cursor-pointer group" onclick="seekClick(event, this)">
-                <div id="progressMini" class="absolute h-full bg-purple-500 rounded-full w-0 group-hover:bg-purple-400"></div>
+            <!-- Slider (Mini) - Read Only visual -->
+            <div class="w-full h-1 bg-[#333] rounded-full relative overflow-hidden">
+                <div id="progressMini" class="absolute h-full bg-purple-500 w-0 transition-all duration-100"></div>
             </div>
         </div>
-        <div class="w-[30%] hidden md:flex justify-end items-center gap-2">
-            <i class="fas fa-volume-high text-gray-400 text-xs"></i>
+        
+        <div class="w-[35%] hidden md:flex justify-end items-center gap-2">
+            <i class="fas fa-volume-low text-gray-400 text-xs"></i>
             <div class="w-20 h-1 bg-[#333] rounded-full"><div class="w-3/4 h-full bg-white"></div></div>
         </div>
     </div>
 
-    <!-- FULLSCREEN -->
+    <!-- FULLSCREEN OVERLAY -->
     <div id="fsOverlay" class="fs-overlay fixed inset-0 z-[200] bg-[#050505] flex flex-col p-6 overflow-y-auto">
-        <div class="absolute inset-0 z-0 opacity-30"><img id="fsBg" class="w-full h-full object-cover blur-[80px]"></div>
-        <div class="relative z-10 flex justify-between items-center mb-4 mt-2">
+        <div class="absolute inset-0 z-0 opacity-40"><img id="fsBg" class="w-full h-full object-cover blur-[100px] scale-110"></div>
+        <div class="relative z-10 flex justify-between items-center mb-6 mt-2">
             <button onclick="closeFullscreen()" class="text-white w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center"><i class="fas fa-chevron-down"></i></button>
             <span class="text-xs font-bold tracking-[0.2em] text-purple-300">SHANOVE</span>
             <button class="text-white w-10 h-10"><i class="fas fa-ellipsis-vertical"></i></button>
         </div>
-        <div class="relative z-10 flex-1 flex flex-col items-center justify-center max-w-lg mx-auto w-full">
-            <div class="w-full aspect-square rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-8 overflow-hidden border border-white/10 bg-[#222]">
+        
+        <div class="relative z-10 flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
+            <div class="w-full aspect-square rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] mb-8 overflow-hidden border border-white/10 bg-[#222]">
                 <img id="fsThumb" src="https://n.uguu.se/olrRLQVZ.jpg" class="w-full h-full object-cover">
             </div>
-            <div class="w-full mb-6 px-2">
-                <h1 id="fsTitle" class="text-2xl font-bold text-white truncate mb-1">No Song</h1>
-                <p id="fsArtist" class="text-lg text-gray-400">Select song...</p>
+            
+            <div class="w-full mb-6 px-1">
+                <h1 id="fsTitle" class="text-2xl font-bold text-white leading-tight mb-1">No Song</h1>
+                <p id="fsArtist" class="text-lg text-gray-400">Select a song...</p>
             </div>
-            <div class="w-full mb-6 px-2">
-                <input type="range" id="fsSeek" value="0" max="100" class="w-full h-1 bg-gray-600 rounded-lg appearance-none accent-purple-500 cursor-pointer" oninput="seek(this.value)">
-                <div class="flex justify-between w-full text-xs text-gray-300 mt-2"><span id="timeFs">0:00</span><span id="durFs">0:00</span></div>
+            
+            <!-- Scrubbing Slider -->
+            <div class="w-full mb-6 px-1">
+                <input type="range" id="fsSeek" value="0" max="100" class="w-full cursor-pointer" oninput="seekInput(this.value)" onchange="seekChange(this.value)">
+                <div class="flex justify-between w-full text-xs text-gray-300 mt-2 font-mono font-medium">
+                    <span id="timeFs">0:00</span><span id="durFs">0:00</span>
+                </div>
             </div>
-            <div class="flex items-center justify-between w-full px-4">
+            
+            <div class="flex items-center justify-between w-full px-2">
                 <button class="text-gray-400"><i class="fas fa-shuffle text-xl"></i></button>
-                <button onclick="prevSong()" class="text-white text-3xl"><i class="fas fa-backward-step"></i></button>
-                <button onclick="togglePlay()" class="w-20 h-20 bg-white rounded-full text-black flex items-center justify-center text-3xl shadow-lg hover:scale-105 transition"><i id="playIconFs" class="fas fa-play ml-1"></i></button>
-                <button onclick="nextSong()" class="text-white text-3xl"><i class="fas fa-forward-step"></i></button>
+                <button onclick="prevSong()" class="text-white text-4xl active:text-purple-400 transition transform active:scale-95"><i class="fas fa-backward-step"></i></button>
+                <button onclick="togglePlay()" class="w-20 h-20 bg-white rounded-full text-black flex items-center justify-center text-3xl shadow-lg transform active:scale-90 transition"><i id="playIconFs" class="fas fa-play ml-1"></i></button>
+                <button onclick="nextSong()" class="text-white text-4xl active:text-purple-400 transition transform active:scale-95"><i class="fas fa-forward-step"></i></button>
                 <button class="text-gray-400"><i class="fas fa-repeat text-xl"></i></button>
             </div>
         </div>
     </div>
 
-    <audio id="audioPlayer"></audio>
+    <audio id="audioPlayer" preload="auto"></audio>
 
     <script>
-        // --- KONFIGURASI API (WAJIB BENAR) ---
+        // CONFIG
         const API_KEY = "RS-e5vtb61yow";
-        const EMAILJS_KEY = "0eVdYs-0usPaFRNPf";
-        const EMAILJS_SERVICE = "service_rlpso0c";
+        const EMAILJS_KEY = "0eVdYs-0usPaFRNPf"; 
+        const EMAILJS_SERVICE = "service_rlpso0c";  
         const EMAILJS_TEMPLATE = "template_6ylv3rq";
 
         (function(){ emailjs.init(EMAILJS_KEY); })();
@@ -210,39 +226,36 @@
         function sendOTP() {
             const email = document.getElementById('emailInput').value;
             const btn = document.getElementById('btnSend');
-            if(!email.includes('@')) return alert("Email salah!");
-            
+            if(!email.includes('@')) return alert("Email salah");
             const otp = Math.floor(100000 + Math.random() * 900000);
             btn.innerText = "Mengirim..."; btn.disabled = true;
-
-            const params = { to_email: email, email: email, otp_code: otp };
-            emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params).then(() => {
+            emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {to_email: email, email: email, otp_code: otp}).then(() => {
                 document.getElementById('emailForm').classList.add('hidden');
                 document.getElementById('otpForm').classList.remove('hidden');
                 document.getElementById('targetEmail').innerText = email;
                 sessionStorage.setItem('otp', otp);
-            }, (err) => {
-                alert("Gagal kirim. Cek internet."); btn.innerText = "Masuk"; btn.disabled = false;
-            });
+            }, () => { alert("Gagal kirim."); btn.innerText = "Masuk"; btn.disabled = false; });
         }
 
         function verifyOTP() {
             if(document.getElementById('otpInput').value == sessionStorage.getItem('otp')) {
                 localStorage.setItem('shanove_user', 'true');
                 document.getElementById('loginOverlay').classList.add('hidden');
-            } else alert("OTP Salah!");
+            } else alert("Kode Salah");
         }
 
-        // --- ENGINE MUSIK FERDEV (FULL AUDIO) ---
+        function logout() { localStorage.removeItem('shanove_user'); location.reload(); }
+        function resetLogin() { location.reload(); }
+
+        // --- MUSIC ENGINE ---
         const audio = document.getElementById('audioPlayer');
         let queue = [];
         let curIndex = -1;
-        let isPlaying = false;
+        let isSeeking = false; // Flag biar slider gak lompat pas digeser
 
-        // 1. SEARCH: Cari list lagu (Belum ada gambar, cuma data text)
+        // 1. SEARCH (iTunes for Display - FAST & HD Images)
         async function searchMusic(query) {
             if(!query) return;
-            
             const loader = document.getElementById('loading');
             const grid = document.getElementById('trackGrid');
             
@@ -253,138 +266,175 @@
             document.getElementById('resultTitle').innerText = `Mencari "${query}"...`;
 
             try {
-                // Endpoint Search Ferdev
-                const url = `https://api.ferdev.my.id/search/spotify?query=${encodeURIComponent(query)}&apikey=${API_KEY}`;
-                const res = await fetch(url);
-                const json = await res.json();
+                // Fetch 50 Results from iTunes
+                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=50`);
+                const data = await res.json();
+                
+                queue = data.results.map(t => ({
+                    title: t.trackName,
+                    artist: t.artistName,
+                    thumb: t.artworkUrl100 ? t.artworkUrl100.replace('100x100', '600x600') : 'https://via.placeholder.com/600',
+                    preview: t.previewUrl
+                }));
 
-                if(json.result && json.result.length > 0) {
-                    queue = json.result; // Simpan hasil search ke antrian
-                    renderGrid();
-                    document.getElementById('resultTitle').innerText = `Hasil: "${query}"`;
-                } else {
-                    document.getElementById('resultTitle').innerText = "Tidak ditemukan.";
-                }
+                renderGrid();
+                document.getElementById('resultTitle').innerText = `Hasil: "${query}"`;
             } catch (e) {
-                alert("Error API Search.");
+                alert("Gagal memuat list.");
             } finally {
                 loader.classList.add('hidden');
                 grid.classList.remove('hidden');
             }
         }
 
-        // 2. RENDER GRID (Gambar Default Keren karena API Search gapunya gambar)
         function renderGrid() {
             const grid = document.getElementById('trackGrid');
             grid.innerHTML = queue.map((t, i) => `
-                <div onclick="playMusic(${i})" class="bg-[#181818] p-4 rounded-xl hover:bg-[#252525] transition cursor-pointer group border border-transparent hover:border-[#333]">
-                    <div class="relative mb-3 aspect-square rounded-lg shadow-lg overflow-hidden bg-gradient-to-br from-gray-800 to-black flex items-center justify-center border border-white/5">
-                        <i class="fas fa-compact-disc text-6xl text-gray-600 group-hover:rotate-180 transition duration-700"></i>
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/50 transition">
+                <div onclick="processAndPlay(${i})" class="bg-[#181818] p-3 rounded-xl hover:bg-[#252525] transition cursor-pointer group active:scale-95">
+                    <div class="relative mb-2 aspect-square rounded-lg overflow-hidden shadow-lg bg-[#222]">
+                        <img src="${t.thumb}" class="w-full h-full object-cover" loading="lazy">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                              <i class="fas fa-play text-white text-3xl"></i>
                         </div>
                     </div>
-                    <h3 class="font-bold text-white text-sm truncate">${t.name}</h3>
-                    <p class="text-gray-400 text-xs truncate">${t.artists}</p>
+                    <h3 class="font-bold text-white text-sm truncate leading-tight">${t.title}</h3>
+                    <p class="text-gray-400 text-xs truncate">${t.artist}</p>
                 </div>
             `).join('');
         }
 
-        // 3. PLAY: Proses Download -> Dapet Link Asli & Gambar -> Play
-        async function playMusic(index) {
+        // 2. PLAY LOGIC (Fetch Ferdev Audio)
+        async function processAndPlay(index) {
             if(index < 0 || index >= queue.length) return;
             curIndex = index;
             const track = queue[index];
 
-            // Tampilkan Loading Audio
-            const audioLoader = document.getElementById('audioLoader');
-            audioLoader.classList.remove('hidden');
+            // Update Tampilan Dulu (Biar gak berasa loading)
+            updatePlayerUI(track.title, track.artist, track.thumb);
+            document.getElementById('audioLoader').classList.remove('hidden');
+            document.getElementById('audioLoader').classList.add('scale-100');
 
             try {
-                // Endpoint Downloader Ferdev
-                const dlUrl = `https://api.ferdev.my.id/downloader/spotify?link=${track.url}&apikey=${API_KEY}`;
-                console.log("Fetching:", dlUrl);
+                // Cari Full Audio di Ferdev
+                const queryFerdev = `${track.artist} - ${track.title}`;
                 
-                const res = await fetch(dlUrl);
-                const json = await res.json();
+                // Step A: Search ID Spotify via Ferdev
+                const searchRes = await fetch(`https://api.ferdev.my.id/search/spotify?query=${encodeURIComponent(queryFerdev)}&apikey=${API_KEY}`);
+                const searchJson = await searchRes.json();
 
-                if(json.success && json.download) {
-                    // SUKSES DAPET DATA
-                    const mp3 = json.download;
-                    const img = json.data.thumbnail || "https://n.uguu.se/olrRLQVZ.jpg";
-                    const title = json.data.title || track.name;
-                    const artist = json.data.artist || track.artists;
-
-                    // Update UI Player
-                    updatePlayerUI(title, artist, img);
+                if(searchJson.result && searchJson.result.length > 0) {
+                    const spotUrl = searchJson.result[0].url;
                     
-                    // Play Audio
-                    audio.src = mp3;
-                    audio.play();
-                    isPlaying = true;
-                    updateIcons();
+                    // Step B: Download MP3 via Ferdev
+                    const dlRes = await fetch(`https://api.ferdev.my.id/downloader/spotify?link=${spotUrl}&apikey=${API_KEY}`);
+                    const dlJson = await dlRes.json();
+
+                    if(dlJson.download) {
+                        playAudioSource(dlJson.download, track);
+                    } else {
+                        throw new Error("Download fail");
+                    }
                 } else {
-                    alert("Gagal mengambil audio dari server.");
+                    throw new Error("Not found in Ferdev");
                 }
             } catch (e) {
-                console.error(e);
-                alert("Gagal memproses lagu.");
+                console.warn("Ferdev fail, fallback to preview", e);
+                // Fallback ke Preview iTunes kalau Ferdev Gagal
+                if(track.preview) {
+                    playAudioSource(track.preview, track);
+                    alert("Mode Preview (30s) - Server Full Audio Sibuk.");
+                } else {
+                    alert("Gagal memutar lagu ini.");
+                }
             } finally {
-                audioLoader.classList.add('hidden');
+                document.getElementById('audioLoader').classList.add('hidden');
             }
+        }
+
+        function playAudioSource(src, meta) {
+            audio.src = src;
+            audio.play().then(() => {
+                updateMediaSession(meta);
+            });
+            updateIcons(true);
         }
 
         function updatePlayerUI(title, artist, img) {
             document.getElementById('miniTitle').innerText = title;
             document.getElementById('miniArtist').innerText = artist;
             document.getElementById('miniThumb').src = img;
-            
             document.getElementById('fsTitle').innerText = title;
             document.getElementById('fsArtist').innerText = artist;
             document.getElementById('fsThumb').src = img;
             document.getElementById('fsBg').src = img;
         }
 
-        // CONTROLS
-        function togglePlay() {
-            if(!audio.src) return;
-            if(audio.paused) { audio.play(); isPlaying = true; } 
-            else { audio.pause(); isPlaying = false; }
-            updateIcons();
+        // --- MEDIA SESSION & CONTROLS ---
+        function updateMediaSession(t) {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: t.title,
+                    artist: t.artist,
+                    artwork: [{ src: t.thumb, sizes: '512x512', type: 'image/jpeg' }]
+                });
+                navigator.mediaSession.setActionHandler('play', togglePlay);
+                navigator.mediaSession.setActionHandler('pause', togglePlay);
+                navigator.mediaSession.setActionHandler('previoustrack', prevSong);
+                navigator.mediaSession.setActionHandler('nexttrack', nextSong);
+                navigator.mediaSession.setActionHandler('seekto', (details) => {
+                    if (details.fastSeek && 'fastSeek' in audio) {
+                        audio.fastSeek(details.seekTime);
+                        return;
+                    }
+                    audio.currentTime = details.seekTime;
+                });
+            }
         }
 
-        function updateIcons() {
+        function togglePlay() {
+            if(audio.paused) { audio.play(); updateIcons(true); } 
+            else { audio.pause(); updateIcons(false); }
+        }
+
+        function updateIcons(isPlaying) {
             const cls = isPlaying ? "fa-pause" : "fa-play";
-            document.getElementById('playIconMini').className = `fas ${cls} ml-0.5`;
+            document.getElementById('playIconMini').className = `fas ${cls} ml-0.5 text-sm`;
             document.getElementById('playIconFs').className = `fas ${cls} ml-1`;
         }
 
-        function nextSong() { playMusic(curIndex + 1); }
-        function prevSong() { playMusic(curIndex - 1); }
+        function nextSong() { processAndPlay(curIndex + 1); }
+        function prevSong() { processAndPlay(curIndex - 1); }
 
+        // --- SEEKING / SLIDER ---
         audio.addEventListener('timeupdate', () => {
-            if(!audio.duration) return;
-            const pct = (audio.currentTime / audio.duration) * 100;
-            document.getElementById('progressMini').style.width = pct + "%";
-            document.getElementById('fsSeek').value = pct;
-            
-            const fmt = s => {
-                if(isNaN(s)) return "0:00";
-                const m = Math.floor(s/60), sec = Math.floor(s%60);
-                return `${m}:${sec<10?'0':''}${sec}`;
-            };
-            document.getElementById('timeFs').innerText = fmt(audio.currentTime);
-            document.getElementById('durFs').innerText = fmt(audio.duration);
+            if(!isSeeking && audio.duration) {
+                const pct = (audio.currentTime / audio.duration) * 100;
+                document.getElementById('progressMini').style.width = pct + "%";
+                document.getElementById('fsSeek').value = pct;
+                
+                const fmt = s => {
+                    if(isNaN(s)) return "0:00";
+                    const m = Math.floor(s/60), sec = Math.floor(s%60);
+                    return `${m}:${sec<10?'0':''}${sec}`;
+                };
+                document.getElementById('timeFs').innerText = fmt(audio.currentTime);
+                document.getElementById('durFs').innerText = fmt(audio.duration);
+            }
         });
+
         audio.addEventListener('ended', nextSong);
 
-        function seek(v) { if(audio.src) audio.currentTime = (v/100)*audio.duration; }
+        // User is dragging slider
+        window.seekInput = (val) => { isSeeking = true; };
+        // User released slider
+        window.seekChange = (val) => { 
+            isSeeking = false; 
+            if(audio.duration) audio.currentTime = (val/100) * audio.duration;
+        };
+
         function showHome() { document.getElementById('homeSuggestions').classList.remove('hidden'); document.getElementById('trackGrid').classList.add('hidden'); document.getElementById('resultTitle').classList.add('hidden'); }
         function openFullscreen() { if(audio.src) document.getElementById('fsOverlay').classList.add('active'); }
         function closeFullscreen() { document.getElementById('fsOverlay').classList.remove('active'); }
-        function logout() { localStorage.removeItem('shanove_user'); location.reload(); }
-        function resetLogin() { localStorage.removeItem('shanove_user'); location.reload(); }
-        function seekClick(e, el) { if(!audio.src) return; const rect = el.getBoundingClientRect(); audio.currentTime = ((e.clientX - rect.left)/rect.width) * audio.duration; }
     </script>
 </body>
 </html>
