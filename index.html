@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shanove Music</title>
     
-    <!-- GANTI LOGO DISINI (Line 10 & 11) -->
+    <!-- ICONS & PWA -->
     <link rel="icon" href="https://via.placeholder.com/150/8b5cf6/ffffff?text=S" type="image/png">
     <link rel="apple-touch-icon" href="https://via.placeholder.com/150/8b5cf6/ffffff?text=S">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
 
+    <!-- LIBS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -22,20 +22,27 @@
         ::-webkit-scrollbar { width: 0px; }
         .fs-overlay { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0, 0, 0.2, 1); will-change: transform; }
         .fs-overlay.active { transform: translateY(0); }
+        
+        /* Slider Styling */
         input[type=range] { -webkit-appearance: none; background: transparent; height: 20px; cursor: pointer; }
         input[type=range]::-webkit-slider-runnable-track { height: 4px; background: #333; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 0; height: 0; box-shadow: -100vw 0 0 100vw #a855f7; background: #fff; }
         #fsSeek::-webkit-slider-thumb { width: 12px; height: 12px; border-radius: 50%; background: white; margin-top: -4px; box-shadow: none; -webkit-appearance: none; }
+        
+        /* Lyrics Styling */
+        .lyrics-container { mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent); }
+        
+        /* Active State for Controls */
+        .ctrl-active { color: #a855f7; text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
     </style>
 </head>
 <body class="h-screen flex flex-col selection:bg-purple-500 selection:text-white">
 
-    <!-- LOGIN -->
+    <!-- LOGIN SCREEN -->
     <div id="loginOverlay" class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
         <div class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div>
         <div class="bg-[#121212] border border-[#333] p-8 rounded-2xl w-full max-w-md text-center shadow-2xl relative z-10">
             <div class="mb-6 flex flex-col items-center justify-center">
-                <!-- LOGO PLACEHOLDER -->
                 <div class="w-20 h-20 rounded-full mb-3 shadow-lg bg-gradient-to-tr from-purple-600 to-blue-600 flex items-center justify-center text-3xl font-bold">S</div>
                 <h1 class="text-2xl font-bold">Shanove Music</h1>
             </div>
@@ -54,153 +61,206 @@
         </div>
     </div>
 
-    <!-- AUDIO LOADER -->
+    <!-- AUDIO LOADER TOAST -->
     <div id="audioLoader" class="fixed top-20 left-1/2 -translate-x-1/2 bg-[#222] border border-purple-500/50 text-white px-4 py-2 rounded-full shadow-2xl z-[60] hidden flex items-center gap-3 transition-all transform scale-95">
         <i class="fas fa-circle-notch fa-spin text-purple-500"></i>
         <div class="flex flex-col">
-            <span class="text-xs font-bold">Memproses Audio...</span>
+            <span class="text-xs font-bold">Memuat Audio...</span>
         </div>
     </div>
 
-    <!-- APP LAYOUT -->
-    <div class="flex-1 flex overflow-hidden bg-black">
-        <!-- SIDEBAR -->
-        <div class="w-64 bg-black hidden md:flex flex-col gap-2 p-2 border-r border-[#1a1a1a]">
-            <div class="p-6">
-                <div class="flex items-center gap-3 text-white mb-6">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-blue-600 flex items-center justify-center font-bold text-sm">S</div>
-                    <span class="font-bold text-lg">Shanove</span>
-                </div>
-                <div class="space-y-1">
-                    <div onclick="showHome()" class="flex items-center gap-4 text-white bg-[#1a1a1a] px-4 py-3 rounded-md cursor-pointer hover:bg-[#222]"><i class="fas fa-home w-5"></i> Home</div>
+    <!-- THREE DOTS MENU MODAL -->
+    <div id="menuModal" class="fixed inset-0 z-[250] bg-black/80 hidden flex flex-col justify-end" onclick="closeMenu()">
+        <div class="bg-[#181818] rounded-t-2xl p-6 animate-slide-up" onclick="event.stopPropagation()">
+            <div class="flex items-center gap-4 mb-6 border-b border-[#333] pb-4">
+                <img id="menuThumb" src="" class="w-12 h-12 rounded bg-gray-800 object-cover">
+                <div>
+                    <h3 id="menuTitle" class="font-bold text-sm truncate w-48">Title</h3>
+                    <p id="menuArtist" class="text-xs text-gray-400">Artist</p>
                 </div>
             </div>
-            <div class="px-6 flex-1 overflow-y-auto">
-                <p class="text-xs font-bold text-gray-500 mb-3 tracking-widest">SUGGESTED</p>
-                <div class="space-y-2 text-sm text-gray-400">
-                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Phonk Aggressive')">🏎️ Phonk Drift</div>
-                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Galau Indonesia 2024')">😢 Galau Indo</div>
-                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('DJ TikTok Viral')">🔥 TikTok Viral</div>
-                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Lofi Hip Hop Sleep')">💤 Sleep / Lofi</div>
-                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Anime Openings')">⛩️ Anime Hits</div>
-                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Band Indonesia 2000an')">🎸 Band Indo 2000an</div>
-                    <div class="cursor-pointer hover:text-white p-2 hover:bg-[#1a1a1a] rounded" onclick="searchMusic('Workout Motivation')">💪 Workout</div>
-                </div>
+            <div class="space-y-2">
+                <button onclick="downloadCurrentSong()" class="w-full flex items-center gap-4 p-3 hover:bg-[#222] rounded-lg transition text-left">
+                    <i class="fas fa-download text-gray-400 w-6"></i> <span>Download Audio</span>
+                </button>
+                <button onclick="alert('Fitur Share segera hadir!')" class="w-full flex items-center gap-4 p-3 hover:bg-[#222] rounded-lg transition text-left">
+                    <i class="fas fa-share-alt text-gray-400 w-6"></i> <span>Share</span>
+                </button>
+                <button onclick="closeMenu()" class="w-full flex items-center gap-4 p-3 hover:bg-[#222] rounded-lg transition text-left text-red-500">
+                    <i class="fas fa-times w-6"></i> <span>Tutup</span>
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- MAIN CONTENT -->
-        <div class="flex-1 bg-[#0a0a0a] overflow-y-auto relative w-full" id="mainContainer">
-            <div class="sticky top-0 p-3 bg-[#0a0a0a]/90 backdrop-blur-xl z-40 flex items-center justify-between border-b border-[#222]">
-                <div class="flex items-center gap-3 w-full max-w-lg">
-                     <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-blue-600 md:hidden flex items-center justify-center font-bold text-sm" onclick="showHome()">S</div>
+    <!-- MAIN APP STRUCTURE -->
+    <div class="flex-1 flex overflow-hidden bg-black pb-[140px] md:pb-0"> <!-- Padding bottom for mobile navbar -->
+        
+        <!-- PAGES CONTAINER -->
+        <div class="flex-1 bg-[#0a0a0a] overflow-y-auto relative w-full scroll-smooth" id="mainContainer">
+            
+            <!-- HOME PAGE -->
+            <div id="pageHome" class="min-h-screen p-4 pb-40">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-blue-600 flex items-center justify-center font-bold text-sm">S</div>
+                        <h1 class="text-xl font-bold">Beranda</h1>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-6 mb-8 relative overflow-hidden border border-white/10 shadow-lg">
+                    <div class="relative z-10">
+                        <h1 class="text-2xl font-bold mb-2">Shanove V5</h1>
+                        <p class="text-gray-200 text-sm mb-4">Lirik, Shuffle, & Background Play Aktif.</p>
+                        <button onclick="searchMusic('Top Hits Indonesia 2025')" class="bg-white text-black px-6 py-2 rounded-full text-sm font-bold hover:scale-105 transition">Play Hits</button>
+                    </div>
+                    <i class="fas fa-music absolute -right-4 -bottom-4 text-8xl text-white/10 rotate-12"></i>
+                </div>
+
+                <h2 class="font-bold text-lg mb-4">Mood Playlist</h2>
+                <div class="grid grid-cols-2 gap-3 mb-8">
+                    <div onclick="searchMusic('Phonk Aggressive')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222]"><div class="w-10 h-10 bg-purple-900 rounded flex items-center justify-center">🏎️</div><span class="text-sm font-bold">Phonk</span></div>
+                    <div onclick="searchMusic('Galau Indonesia')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222]"><div class="w-10 h-10 bg-blue-900 rounded flex items-center justify-center">😢</div><span class="text-sm font-bold">Galau</span></div>
+                    <div onclick="searchMusic('DJ TikTok Viral')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222]"><div class="w-10 h-10 bg-red-900 rounded flex items-center justify-center">🔥</div><span class="text-sm font-bold">TikTok</span></div>
+                    <div onclick="searchMusic('Lofi Sleep')" class="bg-[#181818] p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-[#222]"><div class="w-10 h-10 bg-indigo-900 rounded flex items-center justify-center">💤</div><span class="text-sm font-bold">Sleep</span></div>
+                </div>
+                
+                <h2 class="font-bold text-lg mb-4">Trending</h2>
+                <div class="space-y-2">
+                    <div onclick="searchMusic('Nadhif Basalamah')" class="flex items-center gap-3 p-2 hover:bg-[#181818] rounded cursor-pointer">
+                        <span class="text-gray-500 font-bold w-4">1</span>
+                        <img src="https://via.placeholder.com/50" class="w-10 h-10 rounded bg-gray-800">
+                        <div class="flex-1"><h4 class="text-sm font-bold">Nadhif Basalamah</h4><p class="text-xs text-gray-400">Artist</p></div>
+                    </div>
+                    <div onclick="searchMusic('Mahalini')" class="flex items-center gap-3 p-2 hover:bg-[#181818] rounded cursor-pointer">
+                        <span class="text-gray-500 font-bold w-4">2</span>
+                        <img src="https://via.placeholder.com/50" class="w-10 h-10 rounded bg-gray-800">
+                        <div class="flex-1"><h4 class="text-sm font-bold">Mahalini</h4><p class="text-xs text-gray-400">Artist</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEARCH PAGE -->
+            <div id="pageSearch" class="hidden min-h-screen p-4 pb-40">
+                 <div class="sticky top-0 bg-[#0a0a0a]/95 backdrop-blur z-30 pb-4 pt-2">
+                    <h1 class="text-xl font-bold mb-4">Pencarian</h1>
                     <div class="relative w-full">
-                        <i class="fas fa-search absolute left-4 top-3 text-gray-500"></i>
-                        <input type="text" id="searchInput" placeholder="Cari judul / artis..." class="w-full bg-[#1f1f1f] text-white pl-10 pr-4 py-2.5 rounded-full outline-none focus:bg-[#2a2a2a] text-sm border border-transparent focus:border-[#333]" onkeypress="if(event.key === 'Enter') searchMusic(this.value)">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-500"></i>
+                        <input type="text" id="searchInput" placeholder="Cari lagu, artis, lirik..." class="w-full bg-[#1f1f1f] text-white pl-10 pr-4 py-3 rounded-full outline-none focus:bg-[#2a2a2a] text-sm border border-transparent focus:border-[#333]" onkeypress="if(event.key === 'Enter') searchMusic(this.value)">
                     </div>
                 </div>
-                <button onclick="logout()" class="hidden md:block text-xs font-bold text-gray-400 border border-gray-700 px-4 py-2 rounded-full hover:text-white">LOGOUT</button>
+
+                <div id="searchLoading" class="hidden flex flex-col items-center justify-center py-20">
+                    <i class="fas fa-spinner fa-spin text-3xl text-purple-500 mb-4"></i>
+                    <p class="text-gray-400 text-sm">Mencari di iTunes...</p>
+                </div>
+                
+                <h2 id="resultTitle" class="text-lg font-bold mb-4 hidden">Hasil</h2>
+                <div id="trackGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
             </div>
 
-            <div class="p-3 pb-36 min-h-screen">
-                <!-- HOME SUGGESTIONS -->
-                <div id="homeSuggestions" class="animate-fade-in">
-                    <div class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-6 mb-6 relative overflow-hidden border border-white/10">
-                        <div class="relative z-10">
-                            <h1 class="text-2xl md:text-4xl font-bold mb-2">Smart Shuffle</h1>
-                            <p class="text-gray-200 text-sm mb-4">Algoritma anti-lagu kembar. Full Audio.</p>
-                            <button onclick="searchMusic('Top Hits Indonesia')" class="bg-white text-black px-6 py-2 rounded-full text-sm font-bold hover:scale-105 transition">Play Top Hits</button>
-                        </div>
-                    </div>
-
-                    <h2 class="font-bold text-lg mb-4 px-1">Trending Moods</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div onclick="searchMusic('Healing Pop')" class="bg-[#181818] p-3 rounded-lg cursor-pointer hover:bg-[#222]"><div class="aspect-square bg-green-800 rounded mb-2 flex items-center justify-center text-3xl">🌿</div><div class="font-bold text-sm">Healing</div></div>
-                        <div onclick="searchMusic('Party Club')" class="bg-[#181818] p-3 rounded-lg cursor-pointer hover:bg-[#222]"><div class="aspect-square bg-red-800 rounded mb-2 flex items-center justify-center text-3xl">🎉</div><div class="font-bold text-sm">Party</div></div>
-                        <div onclick="searchMusic('Focus Study')" class="bg-[#181818] p-3 rounded-lg cursor-pointer hover:bg-[#222]"><div class="aspect-square bg-blue-800 rounded mb-2 flex items-center justify-center text-3xl">📚</div><div class="font-bold text-sm">Focus</div></div>
-                        <div onclick="searchMusic('Coffee Shop')" class="bg-[#181818] p-3 rounded-lg cursor-pointer hover:bg-[#222]"><div class="aspect-square bg-yellow-800 rounded mb-2 flex items-center justify-center text-3xl">☕</div><div class="font-bold text-sm">Cafe</div></div>
-                    </div>
-                </div>
-
-                <!-- LOADING -->
-                <div id="loading" class="hidden flex flex-col items-center justify-center py-20">
-                    <i class="fas fa-spinner fa-spin text-3xl text-purple-500 mb-4"></i>
-                    <p class="text-gray-400 text-sm">Mencari lagu terbaik...</p>
-                </div>
-
-                <!-- RESULTS GRID -->
-                <h2 id="resultTitle" class="text-lg font-bold mb-4 hidden px-1">Hasil Pencarian</h2>
-                <div id="trackGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 hidden"></div>
+            <!-- PROFILE PAGE -->
+            <div id="pageProfile" class="hidden min-h-screen p-4 flex flex-col items-center justify-center">
+                <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-gray-700 to-gray-900 flex items-center justify-center text-4xl mb-4">👤</div>
+                <h2 class="text-2xl font-bold mb-1">Pengguna</h2>
+                <p id="profileEmail" class="text-gray-400 mb-8">user@email.com</p>
+                
+                <button onclick="logout()" class="px-8 py-3 rounded-full border border-red-900 text-red-500 hover:bg-red-900/20 font-bold transition">Logout</button>
             </div>
         </div>
     </div>
 
-    <!-- PLAYER BAR -->
-    <div id="playerBar" class="fixed bottom-0 w-full h-[85px] bg-[#090909] border-t border-[#222] px-3 flex items-center justify-between z-50 backdrop-blur-lg">
-        <div class="flex items-center w-[35%] gap-3 cursor-pointer overflow-hidden" onclick="openFullscreen()">
-            <img id="miniThumb" src="https://via.placeholder.com/150/222/333" class="w-12 h-12 rounded bg-[#222] object-cover flex-shrink-0">
+    <!-- BOTTOM NAVBAR (MOBILE) -->
+    <div class="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur border-t border-[#222] h-[60px] flex items-center justify-around z-40 pb-1">
+        <div onclick="switchPage('Home')" class="flex flex-col items-center justify-center w-full h-full text-purple-500 cursor-pointer" id="navHome">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-[10px]">Home</span>
+        </div>
+        <div onclick="switchPage('Search')" class="flex flex-col items-center justify-center w-full h-full text-gray-500 cursor-pointer" id="navSearch">
+            <i class="fas fa-search text-xl mb-1"></i>
+            <span class="text-[10px]">Cari</span>
+        </div>
+        <div onclick="switchPage('Profile')" class="flex flex-col items-center justify-center w-full h-full text-gray-500 cursor-pointer" id="navProfile">
+            <i class="fas fa-user text-xl mb-1"></i>
+            <span class="text-[10px]">Profil</span>
+        </div>
+    </div>
+
+    <!-- MINI PLAYER (FLOATING ABOVE NAV) -->
+    <div id="playerBar" class="fixed bottom-[60px] md:bottom-0 w-full h-[70px] bg-[#111] border-t border-[#222] px-3 flex items-center justify-between z-50 shadow-lg cursor-pointer hidden" onclick="openFullscreen()">
+        <div class="flex items-center w-[70%] gap-3 overflow-hidden">
+            <img id="miniThumb" src="" class="w-10 h-10 rounded bg-[#222] object-cover flex-shrink-0">
             <div class="overflow-hidden">
-                <h4 id="miniTitle" class="text-sm font-bold text-white truncate leading-tight">Shanove Music</h4>
-                <p id="miniArtist" class="text-xs text-gray-500 truncate">Ready to play</p>
+                <h4 id="miniTitle" class="text-sm font-bold text-white truncate">Title</h4>
+                <p id="miniArtist" class="text-xs text-gray-400 truncate">Artist</p>
             </div>
         </div>
         
-        <div class="flex flex-col items-center w-[30%]">
-            <div class="flex items-center gap-5 mb-1 text-white">
-                <button onclick="prevSong()" class="active:scale-90 transition"><i class="fas fa-backward-step text-lg"></i></button>
-                <button onclick="togglePlay()" class="w-9 h-9 bg-white text-black rounded-full flex items-center justify-center shadow-lg active:scale-90 transition"><i id="playIconMini" class="fas fa-play ml-0.5 text-sm"></i></button>
-                <button onclick="nextSong()" class="active:scale-90 transition"><i class="fas fa-forward-step text-lg"></i></button>
-            </div>
-            <div class="w-full h-1 bg-[#333] rounded-full relative overflow-hidden">
-                <div id="progressMini" class="absolute h-full bg-purple-500 w-0 transition-all duration-100"></div>
-            </div>
+        <div class="flex items-center gap-4 pr-2">
+            <button onclick="event.stopPropagation(); togglePlay()" class="w-8 h-8 flex items-center justify-center bg-white text-black rounded-full shadow"><i id="playIconMini" class="fas fa-play text-xs ml-0.5"></i></button>
         </div>
         
-        <div class="w-[35%] hidden md:flex justify-end items-center gap-2">
-            <i class="fas fa-volume-low text-gray-400 text-xs"></i>
-            <div class="w-20 h-1 bg-[#333] rounded-full"><div class="w-3/4 h-full bg-white"></div></div>
+        <!-- Progress Line -->
+        <div class="absolute top-0 left-0 w-full h-[2px] bg-[#333]">
+            <div id="progressMini" class="h-full bg-purple-500 w-0"></div>
         </div>
     </div>
 
     <!-- FULLSCREEN OVERLAY -->
-    <div id="fsOverlay" class="fs-overlay fixed inset-0 z-[200] bg-[#050505] flex flex-col p-6 overflow-y-auto">
-        <div class="absolute inset-0 z-0 opacity-40"><img id="fsBg" class="w-full h-full object-cover blur-[100px] scale-110"></div>
-        <div class="relative z-10 flex justify-between items-center mb-6 mt-2">
+    <div id="fsOverlay" class="fs-overlay fixed inset-0 z-[200] bg-[#050505] flex flex-col overflow-hidden">
+        <!-- Back Button & Options -->
+        <div class="flex justify-between items-center p-6 relative z-20">
             <button onclick="closeFullscreen()" class="text-white w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center"><i class="fas fa-chevron-down"></i></button>
-            <span class="text-xs font-bold tracking-[0.2em] text-purple-300">SHANOVE</span>
-            <button class="text-white w-10 h-10"><i class="fas fa-ellipsis-vertical"></i></button>
+            <span class="text-xs font-bold tracking-[0.2em] text-purple-300">NOW PLAYING</span>
+            <button onclick="openMenu()" class="text-white w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center"><i class="fas fa-ellipsis-v"></i></button>
         </div>
-        
-        <div class="relative z-10 flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
-            <div class="w-full aspect-square rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] mb-8 overflow-hidden border border-white/10 bg-[#222]">
-                <img id="fsThumb" src="https://via.placeholder.com/600/222/333" class="w-full h-full object-cover">
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto px-6 pb-6 relative z-10 no-scrollbar">
+             <!-- Background Blur -->
+            <div class="absolute inset-0 z-[-1] opacity-30 fixed"><img id="fsBg" class="w-full h-full object-cover blur-[100px] scale-110"></div>
+            
+            <!-- Artwork -->
+            <div class="w-full aspect-square rounded-2xl shadow-2xl mb-8 overflow-hidden bg-[#222] mx-auto max-w-sm mt-4">
+                <img id="fsThumb" src="" class="w-full h-full object-cover">
             </div>
             
-            <div class="w-full mb-6 px-1">
+            <!-- Info -->
+            <div class="w-full mb-6 mx-auto max-w-sm">
                 <h1 id="fsTitle" class="text-2xl font-bold text-white leading-tight mb-1">No Song</h1>
                 <p id="fsArtist" class="text-lg text-gray-400">Select a song...</p>
             </div>
             
-            <div class="w-full mb-6 px-1">
+            <!-- Slider -->
+            <div class="w-full mb-6 mx-auto max-w-sm">
                 <input type="range" id="fsSeek" value="0" max="100" class="w-full cursor-pointer" oninput="seekInput(this.value)" onchange="seekChange(this.value)">
-                <div class="flex justify-between w-full text-xs text-gray-300 mt-2 font-mono font-medium">
-                    <span id="timeFs">0:00</span><span id="durFs">0:00</span>
-                </div>
+                <div class="flex justify-between w-full text-xs text-gray-300 mt-2 font-mono"><span id="timeFs">0:00</span><span id="durFs">0:00</span></div>
             </div>
             
-            <div class="flex items-center justify-between w-full px-2">
-                <button class="text-gray-400"><i class="fas fa-shuffle text-xl"></i></button>
+            <!-- Controls -->
+            <div class="flex items-center justify-between w-full mx-auto max-w-sm mb-8">
+                <button onclick="toggleShuffle()" id="btnShuffle" class="text-gray-400 transition"><i class="fas fa-shuffle text-xl"></i></button>
                 <button onclick="prevSong()" class="text-white text-4xl active:text-purple-400 transition transform active:scale-95"><i class="fas fa-backward-step"></i></button>
                 <button onclick="togglePlay()" class="w-20 h-20 bg-white rounded-full text-black flex items-center justify-center text-3xl shadow-lg transform active:scale-90 transition"><i id="playIconFs" class="fas fa-play ml-1"></i></button>
                 <button onclick="nextSong()" class="text-white text-4xl active:text-purple-400 transition transform active:scale-95"><i class="fas fa-forward-step"></i></button>
-                <button class="text-gray-400"><i class="fas fa-repeat text-xl"></i></button>
+                <button onclick="toggleRepeat()" id="btnRepeat" class="text-gray-400 transition"><i class="fas fa-repeat text-xl"></i></button>
+            </div>
+
+            <!-- LYRICS SECTION -->
+            <div class="w-full mx-auto max-w-sm bg-white/5 rounded-xl p-4 backdrop-blur-md mb-8">
+                <h3 class="font-bold text-gray-300 mb-2 text-xs uppercase tracking-widest">Lirik</h3>
+                <div id="lyricsContent" class="text-white/90 text-center font-medium leading-relaxed whitespace-pre-wrap min-h-[100px] max-h-[300px] overflow-y-auto lyrics-container text-sm">
+                    Memuat lirik...
+                </div>
             </div>
         </div>
     </div>
 
-    <audio id="audioPlayer" preload="auto" playsinline></audio>
+    <!-- HIDDEN AUDIO ELEMENT -->
+    <audio id="audioPlayer" preload="auto" playsinline autoplay></audio>
 
     <script>
+        // --- CREDENTIALS ---
         const API_KEY = "RS-e5vtb61yow";
         const EMAILJS_KEY = "0eVdYs-0usPaFRNPf"; 
         const EMAILJS_SERVICE = "service_rlpso0c";  
@@ -208,7 +268,11 @@
 
         (function(){ emailjs.init(EMAILJS_KEY); })();
 
-        if(localStorage.getItem('shanove_user')) document.getElementById('loginOverlay').classList.add('hidden');
+        // --- AUTH ---
+        if(localStorage.getItem('shanove_user')) {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('profileEmail').innerText = localStorage.getItem('shanove_email') || "User";
+        }
 
         function sendOTP() {
             const email = document.getElementById('emailInput').value;
@@ -221,58 +285,81 @@
                 document.getElementById('otpForm').classList.remove('hidden');
                 document.getElementById('targetEmail').innerText = email;
                 sessionStorage.setItem('otp', otp);
+                sessionStorage.setItem('temp_email', email);
             }, () => { alert("Gagal kirim."); btn.innerText = "Masuk"; btn.disabled = false; });
         }
 
         function verifyOTP() {
             if(document.getElementById('otpInput').value == sessionStorage.getItem('otp')) {
                 localStorage.setItem('shanove_user', 'true');
+                localStorage.setItem('shanove_email', sessionStorage.getItem('temp_email'));
                 document.getElementById('loginOverlay').classList.add('hidden');
+                location.reload();
             } else alert("Kode Salah");
         }
-
-        function logout() { localStorage.removeItem('shanove_user'); location.reload(); }
+        function logout() { localStorage.clear(); location.reload(); }
         function resetLogin() { location.reload(); }
 
-        // --- ENGINE ---
+        // --- NAVIGATION ---
+        function switchPage(page) {
+            document.getElementById('pageHome').classList.add('hidden');
+            document.getElementById('pageSearch').classList.add('hidden');
+            document.getElementById('pageProfile').classList.add('hidden');
+            document.getElementById('page' + page).classList.remove('hidden');
+            
+            document.getElementById('navHome').className = "flex flex-col items-center justify-center w-full h-full text-gray-500 cursor-pointer";
+            document.getElementById('navSearch').className = "flex flex-col items-center justify-center w-full h-full text-gray-500 cursor-pointer";
+            document.getElementById('navProfile').className = "flex flex-col items-center justify-center w-full h-full text-gray-500 cursor-pointer";
+            
+            document.getElementById('nav' + page).className = "flex flex-col items-center justify-center w-full h-full text-purple-500 cursor-pointer";
+        }
+
+        // --- MUSIC ENGINE V5 ---
         const audio = document.getElementById('audioPlayer');
         let queue = [];
         let curIndex = -1;
         let isSeeking = false;
+        let isShuffle = false;
+        let repeatMode = 0; // 0: off, 1: all, 2: one
 
-        // 1. SEARCH SMART (Filter Duplikat)
+        // 1. SEARCH
         async function searchMusic(query) {
             if(!query) return;
-            const loader = document.getElementById('loading');
-            const grid = document.getElementById('trackGrid');
+            switchPage('Search');
+            document.getElementById('searchInput').value = query;
             
-            document.getElementById('homeSuggestions').classList.add('hidden');
+            const loader = document.getElementById('searchLoading');
+            const grid = document.getElementById('trackGrid');
+            const resultTitle = document.getElementById('resultTitle');
+
             loader.classList.remove('hidden');
             grid.classList.add('hidden');
-            document.getElementById('resultTitle').classList.remove('hidden');
-            document.getElementById('resultTitle').innerText = `Mencari "${query}"...`;
+            resultTitle.classList.add('hidden');
+            grid.innerHTML = "";
 
             try {
-                // Fetch banyak (50) biar bisa difilter
+                // Fetch iTunes (HD Images)
                 const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=50`);
                 const data = await res.json();
                 
-                // FILTER LOGIC: Hapus lagu yang judulnya mirip/sama persis biar variatif
+                // Filter Duplicates
                 const uniqueTitles = new Set();
                 queue = data.results.filter(t => {
-                    const cleanTitle = t.trackName.toLowerCase().trim();
-                    if(uniqueTitles.has(cleanTitle)) return false; // Skip duplicate
-                    uniqueTitles.add(cleanTitle);
+                    const clean = t.trackName.toLowerCase().trim();
+                    if(uniqueTitles.has(clean)) return false;
+                    uniqueTitles.add(clean);
                     return true;
                 }).map(t => ({
                     title: t.trackName,
                     artist: t.artistName,
                     thumb: t.artworkUrl100 ? t.artworkUrl100.replace('100x100', '600x600') : 'https://via.placeholder.com/600',
-                    preview: t.previewUrl
+                    preview: t.previewUrl,
+                    fullAudio: null // Cache
                 }));
 
                 renderGrid();
-                document.getElementById('resultTitle').innerText = `Hasil: "${query}"`;
+                resultTitle.classList.remove('hidden');
+                resultTitle.innerText = `Hasil: ${queue.length} Lagu`;
             } catch (e) {
                 console.error(e);
             } finally {
@@ -303,25 +390,38 @@
             curIndex = index;
             const track = queue[index];
 
-            updatePlayerUI(track.title, track.artist, track.thumb);
+            updatePlayerUI(track);
+            document.getElementById('playerBar').classList.remove('hidden'); // Show mini player
             document.getElementById('audioLoader').classList.remove('hidden');
 
             try {
-                const queryFerdev = `${track.artist} - ${track.title}`;
-                const searchRes = await fetch(`https://api.ferdev.my.id/search/spotify?query=${encodeURIComponent(queryFerdev)}&apikey=${API_KEY}`);
-                const searchJson = await searchRes.json();
+                // Cek Cache dulu
+                let audioUrl = track.fullAudio;
 
-                if(searchJson.result && searchJson.result.length > 0) {
-                    const dlRes = await fetch(`https://api.ferdev.my.id/downloader/spotify?link=${searchJson.result[0].url}&apikey=${API_KEY}`);
-                    const dlJson = await dlRes.json();
+                if (!audioUrl) {
+                    const queryFerdev = `${track.artist} - ${track.title}`;
+                    const searchRes = await fetch(`https://api.ferdev.my.id/search/spotify?query=${encodeURIComponent(queryFerdev)}&apikey=${API_KEY}`);
+                    const searchJson = await searchRes.json();
 
-                    if(dlJson.download) {
-                        playAudioSource(dlJson.download, track);
-                    } else throw new Error("DL fail");
-                } else throw new Error("Not found");
+                    if(searchJson.result && searchJson.result.length > 0) {
+                        const dlRes = await fetch(`https://api.ferdev.my.id/downloader/spotify?link=${searchJson.result[0].url}&apikey=${API_KEY}`);
+                        const dlJson = await dlRes.json();
+                        if(dlJson.download) {
+                            audioUrl = dlJson.download;
+                            queue[index].fullAudio = audioUrl; // Save to cache
+                        } else throw new Error("DL fail");
+                    } else throw new Error("Not found");
+                }
+                
+                playAudioSource(audioUrl, track);
+                fetchLyrics(track.artist, track.title); // Get Lyrics
+
             } catch (e) {
-                console.warn("Fallback to preview");
-                if(track.preview) playAudioSource(track.preview, track);
+                console.warn("Fallback preview");
+                if(track.preview) {
+                    playAudioSource(track.preview, track);
+                    document.getElementById('lyricsContent').innerText = "Mode Preview (Lirik tidak tersedia)";
+                }
             } finally {
                 document.getElementById('audioLoader').classList.add('hidden');
             }
@@ -331,18 +431,47 @@
             audio.src = src;
             audio.play().then(() => {
                 updateMediaSession(meta);
-            }).catch(e => console.log("Auto-play prevented"));
+            }).catch(e => console.log("Auto-play blocked by browser policy"));
             updateIcons(true);
         }
 
-        function updatePlayerUI(title, artist, img) {
-            document.getElementById('miniTitle').innerText = title;
-            document.getElementById('miniArtist').innerText = artist;
-            document.getElementById('miniThumb').src = img;
-            document.getElementById('fsTitle').innerText = title;
-            document.getElementById('fsArtist').innerText = artist;
-            document.getElementById('fsThumb').src = img;
-            document.getElementById('fsBg').src = img;
+        // 3. LYRICS FEATURE
+        async function fetchLyrics(artist, title) {
+            const el = document.getElementById('lyricsContent');
+            el.innerText = "Mencari lirik...";
+            
+            try {
+                const query = `${artist} ${title}`;
+                const res = await fetch(`https://api.ferdev.my.id/search/lirik?judul=${encodeURIComponent(query)}&apikey=${API_KEY}`);
+                const json = await res.json();
+                
+                if(json.success && json.data && json.data.lirik) {
+                    el.innerText = json.data.lirik;
+                } else {
+                    el.innerText = "Lirik tidak tersedia untuk lagu ini.";
+                }
+            } catch (e) {
+                el.innerText = "Gagal memuat lirik.";
+            }
+        }
+
+        // 4. UI UPDATES
+        function updatePlayerUI(t) {
+            // Mini
+            document.getElementById('miniTitle').innerText = t.title;
+            document.getElementById('miniArtist').innerText = t.artist;
+            document.getElementById('miniThumb').src = t.thumb;
+            
+            // Fullscreen
+            document.getElementById('fsTitle').innerText = t.title;
+            document.getElementById('fsArtist').innerText = t.artist;
+            document.getElementById('fsThumb').src = t.thumb;
+            document.getElementById('fsBg').src = t.thumb;
+            
+            // Menu Modal Info
+            document.getElementById('menuTitle').innerText = t.title;
+            document.getElementById('menuArtist').innerText = t.artist;
+            document.getElementById('menuThumb').src = t.thumb;
         }
 
         function updateMediaSession(t) {
@@ -359,6 +488,7 @@
             }
         }
 
+        // 5. CONTROLS LOGIC
         function togglePlay() {
             if(audio.paused) { audio.play(); updateIcons(true); } 
             else { audio.pause(); updateIcons(false); }
@@ -366,13 +496,63 @@
 
         function updateIcons(isPlaying) {
             const cls = isPlaying ? "fa-pause" : "fa-play";
-            document.getElementById('playIconMini').className = `fas ${cls} ml-0.5 text-sm`;
+            document.getElementById('playIconMini').className = `fas ${cls} text-xs ml-0.5`;
             document.getElementById('playIconFs').className = `fas ${cls} ml-1`;
         }
 
-        function nextSong() { processAndPlay(curIndex + 1); }
-        function prevSong() { processAndPlay(curIndex - 1); }
+        function nextSong() {
+            if (queue.length === 0) return;
+            
+            let nextIndex;
+            if (repeatMode === 2) { // Repeat One
+                audio.currentTime = 0;
+                audio.play();
+                return;
+            }
+            
+            if (isShuffle) {
+                // Random Index
+                nextIndex = Math.floor(Math.random() * queue.length);
+            } else {
+                nextIndex = curIndex + 1;
+                if (nextIndex >= queue.length) {
+                    if (repeatMode === 1) nextIndex = 0; // Repeat All
+                    else return; // Stop
+                }
+            }
+            processAndPlay(nextIndex);
+        }
 
+        function prevSong() {
+            if (queue.length === 0) return;
+            let prevIndex = curIndex - 1;
+            if (prevIndex < 0) prevIndex = queue.length - 1;
+            processAndPlay(prevIndex);
+        }
+
+        // Shuffle & Repeat UI
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            const btn = document.getElementById('btnShuffle');
+            btn.className = isShuffle ? "text-purple-500 transition" : "text-gray-400 transition";
+        }
+
+        function toggleRepeat() {
+            repeatMode = (repeatMode + 1) % 3; // 0->1->2->0
+            const btn = document.getElementById('btnRepeat');
+            if (repeatMode === 0) {
+                btn.className = "text-gray-400 transition";
+                btn.innerHTML = '<i class="fas fa-repeat text-xl"></i>';
+            } else if (repeatMode === 1) {
+                btn.className = "text-purple-500 transition";
+                btn.innerHTML = '<i class="fas fa-repeat text-xl"></i>';
+            } else {
+                btn.className = "text-purple-500 transition";
+                btn.innerHTML = '<div class="relative"><i class="fas fa-repeat text-xl"></i><span class="absolute -top-1 -right-1 text-[8px] font-bold bg-black px-1 rounded">1</span></div>';
+            }
+        }
+
+        // Event Listeners
         audio.addEventListener('timeupdate', () => {
             if(!isSeeking && audio.duration) {
                 const pct = (audio.currentTime / audio.duration) * 100;
@@ -389,18 +569,35 @@
             }
         });
 
-        // AUTO NEXT TANPA ALERT YANG BIKIN STOP
-        audio.addEventListener('ended', nextSong);
+        // AUTO NEXT FIX
+        audio.addEventListener('ended', () => {
+            nextSong();
+        });
 
+        // Seek Handling
         window.seekInput = (val) => { isSeeking = true; };
         window.seekChange = (val) => { 
             isSeeking = false; 
             if(audio.duration) audio.currentTime = (val/100) * audio.duration;
         };
 
-        function showHome() { document.getElementById('homeSuggestions').classList.remove('hidden'); document.getElementById('trackGrid').classList.add('hidden'); document.getElementById('resultTitle').classList.add('hidden'); }
+        // UI Toggles
+        function showHome() { switchPage('Home'); }
         function openFullscreen() { if(audio.src) document.getElementById('fsOverlay').classList.add('active'); }
         function closeFullscreen() { document.getElementById('fsOverlay').classList.remove('active'); }
+        
+        // Menu Functions
+        function openMenu() { document.getElementById('menuModal').classList.remove('hidden'); }
+        function closeMenu() { document.getElementById('menuModal').classList.add('hidden'); }
+        
+        function downloadCurrentSong() {
+            if (curIndex >= 0 && queue[curIndex].fullAudio) {
+                window.open(queue[curIndex].fullAudio, '_blank');
+            } else {
+                alert("Audio belum siap didownload.");
+            }
+            closeMenu();
+        }
     </script>
 </body>
 </html>
