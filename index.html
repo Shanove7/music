@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#09090b">
+    <title>Shanove Music</title>
+    
+    <!-- Fonts & Style -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #09090b; color: white; overflow: hidden; }
+        .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        /* Loader Animation */
+        .loader { border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; width: 20px; height: 20px;}
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="h-screen w-screen relative">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="absolute inset-0 z-50 bg-[#09090b] flex flex-col items-center justify-center p-6 transition-opacity duration-500">
+        <div class="w-full max-w-md text-center">
+            <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-white/10 shadow-2xl shadow-purple-500/50">
+            <h1 class="text-3xl font-bold mb-8">Shanove Music</h1>
+
+            <!-- Step 1: Input Nomor -->
+            <div id="step-1" class="space-y-4">
+                <div class="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-3">
+                    <i class="fab fa-whatsapp text-green-500 text-xl"></i>
+                    <input type="tel" id="wa-input" placeholder="08xxxxxxxxxx" class="bg-transparent w-full outline-none text-white placeholder-gray-500 font-bold">
+                </div>
+                <button onclick="requestOTP()" id="btn-request" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 py-4 rounded-xl font-bold shadow-lg active:scale-95 transition hover:brightness-110">
+                    Kirim Kode OTP
+                </button>
+            </div>
+
+            <!-- Step 2: Input OTP -->
+            <div id="step-2" class="space-y-4 hidden">
+                <p class="text-sm text-gray-400">Masukkan kode yang dikirim Bot ke WhatsApp Anda</p>
+                <div class="flex justify-center gap-3">
+                    <input type="text" id="otp-input" maxlength="4" class="w-32 h-14 bg-white/10 rounded-xl text-center text-2xl font-bold tracking-[10px] outline-none border border-white/20 focus:border-green-500">
+                </div>
+                <button onclick="verifyOTP()" class="w-full bg-white text-black py-4 rounded-xl font-bold shadow-lg active:scale-95 transition hover:bg-gray-200">
+                    Verifikasi Masuk
+                </button>
+                <p class="text-xs text-gray-500 mt-4 cursor-pointer hover:text-white" onclick="location.reload()">Ganti Nomor</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD (Hidden) -->
+    <div id="app-container" class="hidden h-full flex flex-col">
+        <!-- Header -->
+        <header class="h-16 px-5 flex items-center justify-between bg-gradient-to-b from-black to-transparent z-10">
+            <div class="flex items-center gap-3">
+                <img src="https://n.uguu.se/olrRLQVZ.jpg" class="w-8 h-8 rounded-full border border-white/20">
+                <span class="font-bold">Shanove</span>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center cursor-pointer" onclick="toggleSearch()">
+                <i class="fas fa-search text-white"></i>
+            </div>
+        </header>
+
+        <!-- Search Box -->
+        <div id="search-box" class="hidden px-5 py-2 transition-all">
+            <input type="text" id="search-input" placeholder="Cari lagu atau artis..." class="w-full bg-[#1e1e22] p-4 rounded-xl outline-none text-white border border-white/10 focus:border-purple-500 transition-colors">
+        </div>
+
+        <!-- Scrollable Content -->
+        <main class="flex-1 overflow-y-auto px-5 pb-32 hide-scroll" id="main-content">
+            <div id="home-view">
+                <h2 class="text-xl font-bold mb-4 mt-4 flex items-center gap-2">
+                    <i class="fas fa-fire text-orange-500"></i> Lagi Ngetren
+                </h2>
+                <div id="song-list" class="flex flex-col gap-3 pb-4">
+                    <!-- Song items injected here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Floating Player Bar -->
+        <div id="player-bar" class="fixed bottom-0 w-full glass h-[85px] flex items-center px-5 justify-between border-t border-white/10 translate-y-full transition-transform duration-300 z-50">
+            <div class="flex items-center gap-3 w-[65%] overflow-hidden">
+                <img id="p-img" src="" class="w-12 h-12 rounded-lg bg-gray-800 object-cover shadow-lg">
+                <div class="truncate">
+                    <h4 id="p-title" class="font-bold text-sm truncate text-white">Judul Lagu</h4>
+                    <p id="p-artist" class="text-xs text-gray-400 truncate">Nama Artis</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="btn-play" class="w-11 h-11 bg-white rounded-full text-black flex items-center justify-center shadow-lg hover:scale-105 transition" onclick="toggleAudio()">
+                    <i class="fas fa-play ml-0.5 text-lg"></i>
+                </button>
+            </div>
+            <!-- Progress Line Top -->
+            <div class="absolute top-0 left-0 w-full h-[2px] bg-white/10">
+                 <div id="progress-bar" class="h-full bg-purple-500 w-0 transition-all duration-100"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Engine -->
+    <audio id="audio"></audio>
+
+    <script>
+        // ==========================================
+        // KONFIGURASI KONEKSI (VPS & API)
+        // ==========================================
+        const VPS_API = 'http://165.227.208.228:5017'; // IP & Port Kamu
+        const MUSIC_API_KEY = 'RS-e5vtb61yow';
+        
+        let generatedOTP = null;
+        let audio = document.getElementById('audio');
+
+        // --- SISTEM OTP & LOGIN ---
+        async function requestOTP() {
+            const phoneInput = document.getElementById('wa-input').value;
+            const btn = document.getElementById('btn-request');
+
+            if (phoneInput.length < 9) return alert("Nomor WhatsApp tidak valid!");
+
+            // Format Nomor (08xx -> 628xx)
+            let formattedPhone = phoneInput.replace(/[^0-9]/g, '');
+            if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.substring(1);
+
+            // 1. Generate Kode Acak 4 Digit
+            generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+
+            // Loading UI
+            btn.innerHTML = '<span class="loader"></span> Menghubungi Bot...';
+            btn.disabled = true;
+
+            try {
+                // 2. Tembak ke VPS Bot
+                const response = await fetch(`${VPS_API}/send-otp?nomor=${formattedPhone}&kode=${generatedOTP}`, {
+                    method: 'GET', // CORS Friendly
+                });
+
+                if(!response.ok) throw new Error("Gagal connect (Network/CORS)");
+                
+                const result = await response.json();
+
+                if (result.status) {
+                    showStep2();
+                } else {
+                    alert("Bot Menolak: " + result.msg);
+                    resetBtn();
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Gagal menghubungi VPS! Pastikan Bot menyala dan Port 5017 sudah dialokasikan di Pterodactyl Network.");
+                
+                // Fallback Simulasi (Agar kamu tetap bisa test UI walau bot mati)
+                if(confirm("Masuk Mode Offline (Simulasi)?")) {
+                    alert(`Kode OTP Simulasi: ${generatedOTP}`);
+                    showStep2();
+                } else {
+                    resetBtn();
+                }
+            }
+        }
+
+        function resetBtn() {
+            const btn = document.getElementById('btn-request');
+            btn.innerHTML = 'Kirim Kode OTP';
+            btn.disabled = false;
+        }
+
+        function showStep2() {
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+        }
+
+        function verifyOTP() {
+            const input = document.getElementById('otp-input').value;
+            if (input === generatedOTP) {
+                document.getElementById('login-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('app-container').classList.remove('hidden');
+                    initMusicApp();
+                }, 500);
+            } else {
+                alert("Kode OTP Salah!");
+            }
+        }
+
+        // --- LOGIKA MUSIK ---
+        function initMusicApp() {
+            // Load lagu awal
+            fetchSongs('Mahalini'); 
+        }
+
+        function toggleSearch() {
+            const box = document.getElementById('search-box');
+            box.classList.toggle('hidden');
+            if(!box.classList.contains('hidden')) document.getElementById('search-input').focus();
+        }
+
+        let debounceTimer;
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => fetchSongs(e.target.value), 800);
+        });
+
+        async function fetchSongs(query) {
+            const container = document.getElementById('song-list');
+            container.innerHTML = '<div class="text-center mt-10 opacity-50"><span class="loader"></span> Memuat...</div>';
+            
+            try {
+                const res = await fetch(`https://api.ferdev.my.id/search/spotify?apikey=${MUSIC_API_KEY}&query=${query}`);
+                const data = await res.json();
+                
+                container.innerHTML = '';
+                if(data.result) {
+                    data.result.forEach(song => {
+                        const card = document.createElement('div');
+                        card.className = 'flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 active:scale-[0.98] transition cursor-pointer';
+                        
+                        // Gambar Abstrak Keren (Anti Huruf)
+                        const rndImg = `https://picsum.photos/seed/${song.url}/200`;
+                        
+                        card.innerHTML = `
+                            <img src="${rndImg}" class="w-14 h-14 rounded-lg object-cover bg-gray-800 shadow-md">
+                            <div class="flex-1 overflow-hidden">
+                                <h3 class="font-bold text-white text-sm truncate">${song.name}</h3>
+                                <p class="text-xs text-gray-400 truncate">${song.artists}</p>
+                            </div>
+                            <button class="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/50 hover:text-white hover:border-white transition">
+                                <i class="fas fa-play text-xs ml-0.5"></i>
+                            </button>
+                        `;
+                        card.onclick = () => playSong(song);
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-center text-gray-500 mt-4">Tidak ditemukan.</p>';
+                }
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-gray-500 mt-4">Gagal memuat lagu.</p>';
+            }
+        }
+
+        async function playSong(song) {
+            const player = document.getElementById('player-bar');
+            const btn = document.getElementById('btn-play');
+            
+            // Set UI Awal (Optimistik)
+            document.getElementById('p-title').innerText = song.name;
+            document.getElementById('p-artist').innerText = song.artists;
+            document.getElementById('p-img').src = "https://n.uguu.se/olrRLQVZ.jpg"; // Placeholder Loading
+            
+            player.classList.remove('translate-y-full');
+            btn.innerHTML = '<span class="loader" style="width:16px;height:16px;"></span>';
+
+            try {
+                const res = await fetch(`https://api.ferdev.my.id/downloader/spotify?apikey=${MUSIC_API_KEY}&link=${song.url}`);
+                const data = await res.json();
+                
+                if(data.success) {
+                    audio.src = data.download;
+                    audio.play();
+                    
+                    // Update dengan Thumbnail Asli
+                    if(data.data.thumbnail) document.getElementById('p-img').src = data.data.thumbnail;
+                    
+                    updatePlayBtn(true);
+                } else {
+                    alert("Gagal mengambil audio (API Limit/Error)");
+                    updatePlayBtn(false);
+                }
+            } catch(e) {
+                console.error(e);
+                updatePlayBtn(false);
+            }
+        }
+
+        function toggleAudio() {
+            if(audio.paused) {
+                audio.play();
+                updatePlayBtn(true);
+            } else {
+                audio.pause();
+                updatePlayBtn(false);
+            }
+        }
+
+        function updatePlayBtn(isPlaying) {
+            const btn = document.getElementById('btn-play');
+            if(isPlaying) {
+                btn.innerHTML = '<i class="fas fa-pause text-lg"></i>';
+            } else {
+                btn.innerHTML = '<i class="fas fa-play ml-0.5 text-lg"></i>';
+            }
+        }
+
+        // Update Progress Bar
+        audio.addEventListener('timeupdate', () => {
+            if(audio.duration) {
+                const pct = (audio.currentTime / audio.duration) * 100;
+                document.getElementById('progress-bar').style.width = pct + '%';
+            }
+        });
+
+        audio.addEventListener('ended', () => updatePlayBtn(false));
+
+    </script>
+</body>
+</html>
+
+
